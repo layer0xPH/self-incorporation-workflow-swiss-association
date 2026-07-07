@@ -6,12 +6,14 @@ import { setMeetingRoles } from "document-models/swiss-association";
 import { FormField } from "./FormField.js";
 import { SectionCard } from "./SectionCard.js";
 import { Stage2DocumentStep } from "./Stage2DocumentStep.js";
+import { TreasuryGateway } from "./TreasuryGateway.js";
 import { buildFoundingMinutesMarkdown } from "./stage2Templates.js";
 
 interface Props {
   state: SwissAssociationState;
   dispatch: DocumentDispatch<SwissAssociationAction>;
-  onNext: () => void;
+  // Called from the post-founding gateway to route into multisig setup.
+  onSetupMultisig: () => void;
   onBack: () => void;
   onOpenAoa?: () => void;
 }
@@ -19,7 +21,7 @@ interface Props {
 export function StepFoundingMeeting({
   state,
   dispatch,
-  onNext,
+  onSetupMultisig,
   onBack,
   onOpenAoa,
 }: Props) {
@@ -53,9 +55,9 @@ export function StepFoundingMeeting({
     chairName.trim() !== "" &&
     secretaryName.trim() !== "" &&
     (meetingIsOnline || meetingVenue.trim() !== "");
-  const phaseAComplete =
-    state.aoaDocument?.isSigned === true &&
-    state.foundingMinutesDocument?.isSigned === true;
+  // Milestone M1 — the association legally exists. Gates the post-founding
+  // gateway (see TreasuryGateway).
+  const minutesSigned = state.foundingMinutesDocument?.isSigned === true;
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -145,26 +147,6 @@ export function StepFoundingMeeting({
 
       {rolesSaved && (
         <>
-          {phaseAComplete && (
-            <div className="p-5 bg-green-50 border border-green-300 rounded-xl">
-              <p className="text-base font-semibold text-green-900">
-                The Association {state.nameEn || state.nameDe || "Association"}{" "}
-                is now officially incorporated.
-              </p>
-              <p className="text-sm text-green-800 mt-1">
-                Both the Articles of Association and Founding Meeting Minutes
-                have been executed.
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {onOpenAoa && (
-                  <button onClick={onOpenAoa} className="sw-btn-secondary">
-                    Open Executed Articles of Association
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
           <Stage2DocumentStep
             title="Founding Meeting Minutes"
             description="Review the Founding Meeting Minutes generated from the data you provided. Sign to confirm the official record of the founding."
@@ -173,11 +155,18 @@ export function StepFoundingMeeting({
             documentState={state.foundingMinutesDocument}
             generateMarkdown={() => buildFoundingMinutesMarkdown(state)}
             onBack={onBack}
-            onNext={onNext}
-            nextLabel="Continue to Workflow Status →"
-            nextRequiresSigned={true}
             lockedHint="The Founding Meeting Minutes are now locked and cannot be edited."
           />
+
+          {/* Once the minutes are signed (M1), the founding is done and the
+              forward flow becomes the treasury gateway — not a linear "next". */}
+          {minutesSigned && (
+            <TreasuryGateway
+              state={state}
+              onSetupMultisig={onSetupMultisig}
+              onOpenAoa={onOpenAoa}
+            />
+          )}
         </>
       )}
     </div>

@@ -255,12 +255,7 @@ export function CapabilityFlow({ progress }: { progress: StageProgress }) {
                   strokeWidth={1}
                 />
                 <circle cx={depX + 13} cy={dcy} r={2.5} fill={SLATE_300} />
-                <text
-                  x={depX + 24}
-                  y={dcy + 3}
-                  fontSize={9}
-                  fill={SLATE_500}
-                >
+                <text x={depX + 24} y={dcy + 3} fontSize={9} fill={SLATE_500}>
                   {d.label}
                 </text>
               </g>

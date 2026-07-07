@@ -124,21 +124,26 @@ export default function Editor() {
           />
         );
       case 5:
+        // Multisig (step 6) leaves the required chain — Reg GA flows straight
+        // to the founding meeting (step 7). Step 6 is reached only via the
+        // post-founding gateway or the optional-branch sidebar.
         return (
           <StepRegulationGA
             state={state}
             dispatch={safeDispatch}
             onBack={() => setCurrentStep(4)}
-            onNext={() => setCurrentStep(6)}
+            onNext={() => setCurrentStep(7)}
           />
         );
       case 6:
+        // Back returns to the founding gateway (step 7) it was launched from;
+        // forward continues to the Multisig Participation Agreement (step 8).
         return (
           <StepMultisigConfig
             state={state}
             dispatch={safeDispatch}
-            onNext={() => setCurrentStep(7)}
-            onBack={() => setCurrentStep(5)}
+            onNext={() => setCurrentStep(8)}
+            onBack={() => setCurrentStep(7)}
           />
         );
       case 7:
@@ -146,15 +151,15 @@ export default function Editor() {
           <StepFoundingMeeting
             state={state}
             dispatch={safeDispatch}
-            onNext={() => {
+            onSetupMultisig={() => {
               if (!state.stage2Started) {
                 safeDispatch(
                   actions.startStage_2({ startedAt: new Date().toISOString() }),
                 );
               }
-              setCurrentStep(8);
+              setCurrentStep(6);
             }}
-            onBack={() => setCurrentStep(6)}
+            onBack={() => setCurrentStep(5)}
             onOpenAoa={() => setCurrentStep(4)}
           />
         );

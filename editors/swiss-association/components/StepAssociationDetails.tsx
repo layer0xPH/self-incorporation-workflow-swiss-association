@@ -30,13 +30,12 @@ export function StepAssociationDetails({ state, dispatch, onNext }: Props) {
   const [registeredAddress, setRegisteredAddress] = useState(
     state.registeredAddress ?? "",
   );
-  const [fiscalYearEnd, setFiscalYearEnd] = useState(
-    state.fiscalYearEnd ?? "31 December",
-  );
-  const [membershipFee, setMembershipFee] = useState(
-    state.membershipFee ?? "none",
-  );
-  const [primaryLanguage, setPrimaryLanguageState] = useState<PrimaryLanguage>(
+  // Fiscal year-end, membership fee and primary language are hidden in the MVP
+  // editor but retained in the model — their values still flow through
+  // handleSave with sensible defaults. (Setters dropped since nothing edits them.)
+  const [fiscalYearEnd] = useState(state.fiscalYearEnd ?? "31 December");
+  const [membershipFee] = useState(state.membershipFee ?? "none");
+  const [primaryLanguage] = useState<PrimaryLanguage>(
     state.primaryLanguage ?? "EN",
   );
   const [purposeEn, setPurposeEn] = useState(state.purposeEn ?? "");
@@ -61,10 +60,13 @@ export function StepAssociationDetails({ state, dispatch, onNext }: Props) {
     onNext();
   }
 
+  // The registered street address is optional: a Swiss Verein is validly
+  // founded with only its municipality (city) + canton named in the statutes.
+  // The street address belongs to the later operational (domicile-provider) layer.
   const isValid =
     nameEn.trim() !== "" &&
     seatCity.trim() !== "" &&
-    registeredAddress.trim() !== "" &&
+    seatCanton.trim() !== "" &&
     purposeEn.trim() !== "";
 
   return (
@@ -89,35 +91,16 @@ export function StepAssociationDetails({ state, dispatch, onNext }: Props) {
             className="sw-input"
           />
         </FormField>
-        <FormField
-          label="Primary Working Language"
-          hint="Choose the single language used while drafting inputs in this editor."
-        >
-          <div className="flex gap-3">
-            {(["EN"] as PrimaryLanguage[]).map((lang) => (
-              <button
-                key={lang}
-                onClick={() => setPrimaryLanguageState(lang)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
-                  primaryLanguage === lang
-                    ? "bg-red-600 border-red-600 text-white"
-                    : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
-                }`}
-              >
-                {lang}
-              </button>
-            ))}
-          </div>
-          <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-            <p className="text-xs font-medium text-amber-800 mb-1">
-              Swiss filing note
-            </p>
-            <p className="text-xs text-amber-700">
-              Official filing outputs will still require German translations of
-              required sections before submission in Switzerland.
-            </p>
-          </div>
-        </FormField>
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+          <p className="text-xs font-medium text-amber-800 mb-1">
+            Swiss filing note
+          </p>
+          <p className="text-xs text-amber-700">
+            The editor drafts in English. Official filing outputs will still
+            require German translations of required sections before submission
+            in Switzerland.
+          </p>
+        </div>
       </SectionCard>
 
       <SectionCard title="Registered Seat">
@@ -141,11 +124,7 @@ export function StepAssociationDetails({ state, dispatch, onNext }: Props) {
             />
           </FormField>
         </div>
-        <FormField
-          label="Registered Address"
-          hint="Domicile provider address"
-          required
-        >
+        <FormField label="Registered Address">
           <input
             type="text"
             value={registeredAddress}
@@ -153,32 +132,18 @@ export function StepAssociationDetails({ state, dispatch, onNext }: Props) {
             placeholder="c/o Provider, Bahnhofstrasse 1, 6300 Zug"
             className="sw-input"
           />
+          {!registeredAddress.trim() && (
+            <p className="text-xs text-slate-400 mt-1">
+              Optional — a registered street address is added when you engage a
+              domicile provider (operational step).
+            </p>
+          )}
         </FormField>
       </SectionCard>
 
-      <SectionCard title="Fiscal">
-        <FormField label="Fiscal Year End">
-          <input
-            type="text"
-            value={fiscalYearEnd}
-            onChange={(e) => setFiscalYearEnd(e.target.value)}
-            placeholder="31 December"
-            className="sw-input"
-          />
-        </FormField>
-        <FormField
-          label="Annual Membership Fee"
-          hint="Enter an amount (e.g. CHF 100) or 'none'"
-        >
-          <input
-            type="text"
-            value={membershipFee}
-            onChange={(e) => setMembershipFee(e.target.value)}
-            placeholder="none"
-            className="sw-input"
-          />
-        </FormField>
-      </SectionCard>
+      {/* Fiscal card (fiscal year-end + annual membership fee) hidden for the
+          MVP editor — values retained in the model via handleSave defaults.
+          Reintroduce post-workshop. */}
 
       <SectionCard title="Purpose Clause">
         <FormField
@@ -193,6 +158,9 @@ export function StepAssociationDetails({ state, dispatch, onNext }: Props) {
             placeholder="The purpose of the Association is to support and fund the development of open source software as a public good..."
             className="sw-input resize-none"
           />
+          <p className="text-xs text-slate-400 mt-1">
+            Your purpose statement also feeds the suitability analysis.
+          </p>
         </FormField>
         {purposeEn && (
           <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
@@ -214,7 +182,7 @@ export function StepAssociationDetails({ state, dispatch, onNext }: Props) {
           {[
             !nameEn.trim() && "Association Name (English)",
             !seatCity.trim() && "City",
-            !registeredAddress.trim() && "Registered Address",
+            !seatCanton.trim() && "Canton",
             !purposeEn.trim() && "Purpose (English)",
           ]
             .filter(Boolean)

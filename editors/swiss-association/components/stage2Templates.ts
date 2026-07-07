@@ -213,10 +213,23 @@ export function buildAoaMarkdown(state: SwissAssociationState) {
   const date = formatDate(state.foundingDate);
   const city = state.seatCity || "Zug";
 
+  // The registered street address is optional. The registered office renders
+  // from the full address when present, otherwise from the municipality +
+  // canton alone (a Swiss Verein is validly seated on that basis). This also
+  // consumes the template's hardcoded "Zug, Switzerland" trailer so no dangling
+  // locality is left behind.
+  const registeredOffice = state.registeredAddress?.trim()
+    ? state.registeredAddress.trim()
+    : `${city}, ${state.seatCanton || "Switzerland"}`;
+
   const templateWithBaseData = applyReplacements(aoaTemplateRaw, [
     { token: "[Association Name]", value: associationName },
     { token: "[purpose]", value: state.purposeEn || "N/A" },
     { token: "[Date]", value: date },
+    {
+      token: "in [Address] Zug, Switzerland",
+      value: `in ${registeredOffice}`,
+    },
     { token: "[Address]", value: resolveAddress(state) },
   ]);
   const signatories = formatList(toMemberLines(state));
@@ -258,17 +271,27 @@ export function buildAoaMarkdown(state: SwissAssociationState) {
     )}\n`;
   }
 
-  // Append the shared signature section for board members.
-  const signers = state.boardMembers?.length
+  // Adoption of a non-commercial Verein's statutes is effected by APPROVAL at
+  // the founding assembly (step 7) — signing the statutes is not legally
+  // mandatory. The AoA drafted here is the instrument; the mandatory signatures
+  // (chair + secretary) live on the founding minutes, handled separately. Here
+  // we render at most ONE optional board signatory as a formality, not an
+  // all-board sign-off.
+  const boardSigners = state.boardMembers?.length
     ? state.boardMembers
     : state.members || [];
+  const optionalSigner = boardSigners[0];
   template += buildSignatureSection(
-    `The undersigned board members hereby adopt the Articles of Association of **${associationName}**, executed on **${date}** in **${city}**, Switzerland.`,
-    signers.map((m) => ({
-      name: m.name,
-      role: "Board Member",
-      note: m.nationalityOrCountry,
-    })),
+    `These Articles of Association were adopted by the founding assembly of **${associationName}** on **${date}** in **${city}**, Switzerland. Signing the statutes is an optional formality — adoption is effected by the assembly's approval, with the mandatory signatures recorded on the founding meeting minutes.`,
+    optionalSigner
+      ? [
+          {
+            name: optionalSigner.name,
+            role: "For the Board — optional signatory",
+            note: optionalSigner.nationalityOrCountry,
+          },
+        ]
+      : [],
   );
 
   return appendPlaceholderReport(template, "AoA");
@@ -447,11 +470,17 @@ export function buildRegulationGAMarkdown(state: SwissAssociationState) {
     .replace("Signatory 1 (Role = chair]", chairName)
     .replace("Signatory 2 (Role = secretary)", secretaryName);
 
+  // Approval by the General Assembly is the operative act — signing this
+  // regulation is not mandatory. Render a single optional signatory (the chair)
+  // as a formality, not a required chair+secretary pair (those mandatory
+  // signatures belong to the founding minutes, handled separately).
   template += buildSignatureSection(
-    `Approved by the General Assembly of **${associationName}** on **${date}**.`,
+    `Approved by the General Assembly of **${associationName}** on **${date}**. Signing this regulation is an optional formality — approval by the General Assembly is the operative act, with the mandatory signatures recorded on the founding meeting minutes.`,
     [
-      { name: chairName, role: "Chair of the General Assembly" },
-      { name: secretaryName, role: "Secretary of the General Assembly" },
+      {
+        name: chairName,
+        role: "For the General Assembly — optional signatory",
+      },
     ],
   );
 

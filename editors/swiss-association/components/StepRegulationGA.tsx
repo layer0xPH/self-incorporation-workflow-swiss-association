@@ -15,7 +15,7 @@ export function StepRegulationGA({ state, dispatch, onBack, onNext }: Props) {
   return (
     <Stage2DocumentStep
       title="Regulation of the General Assembly"
-      description="Review the Regulation of the General Assembly — the decision-making rules governing how your association votes and operates. The template has been populated with your association's data. Please review and sign if you agree."
+      description="Review and edit the Regulation of the General Assembly — the decision-making rules governing how your association votes and operates. The template is populated with your association's data. The regulations are approved at the founding meeting (step 7), not signed here — signing is an optional formality by one or two board members, not a requirement."
       documentType="REG_GA"
       dispatch={dispatch}
       documentState={state.regGaDocument}

@@ -16,6 +16,14 @@ export interface StageDef {
   // one another and only open once Milestone M1 (the entity legally exists) is
   // reached. Required stages (Pre-Incorporation, Incorporation) stay sequential.
   optional?: boolean;
+  // A not-yet-built onward capability shown as a muted "coming soon" placeholder
+  // (no steps, not clickable). Reads as optional/coming-soon, never as an
+  // incomplete required step.
+  comingSoon?: boolean;
+  // Badge text for a coming-soon stage (defaults to "Coming soon").
+  comingSoonBadge?: string;
+  // Optional description, currently only used by the coming-soon stages.
+  description?: string;
 }
 
 // Stages are grouped to mirror the capability-flow diagram. Step NUMBERS are
@@ -46,7 +54,10 @@ export const STAGES: StageDef[] = [
   {
     // Capability "Can hold & move money" — defined by the multisig (step 6).
     // The MPA (step 8) is additive/optional within the stage; it does not gate
-    // the capability.
+    // the capability. An accessible OPTIONAL stage: it unlocks once the entity
+    // is constituted (M1) and is reachable in the flow and the sidebar. (The
+    // governance-only inputs — finance-policy URL, emergency procedures — are
+    // hidden inside StepMultisigConfig; the core multisig config stays.)
     number: 3,
     name: "Treasury & Governance",
     optional: true,
@@ -64,9 +75,31 @@ export const STAGES: StageDef[] = [
     steps: [{ number: 9, label: "Contributor agreements" }],
   },
   {
+    // Optional onward capability that is not built yet. Full operation requires
+    // a tax ID + a registered domicile provider (the "operational later" layer).
+    // Mirrors the CapabilityFlow "Can invoice & get paid, compliantly" node.
+    // number 6 (out of array order vs Dissolution) is intentional — it is only
+    // used as a React key / milestone selector and is never shown (the card is
+    // a muted coming-soon placeholder with no numbered circle).
+    number: 6,
+    name: "Operational",
+    optional: true,
+    comingSoon: true,
+    description:
+      "The full operational setup — coming next: obtain a tax ID and engage a registered domicile provider, so the entity can invoice and get paid compliantly. Completed later; the product will support this.",
+    steps: [],
+  },
+  {
+    // Optional end-of-lifecycle stage, presented as coming-soon for now (same
+    // muted, non-clickable treatment as Operational). Founding is complete
+    // without it — this must never make a founded-only entity read as unfinished.
     number: 5,
     name: "Dissolution",
     optional: true,
+    comingSoon: true,
+    comingSoonBadge: "Coming next",
+    description:
+      "Winding down — coming next. The end of the entity lifecycle: formal dissolution, asset distribution, closure. Sovereignty includes ending the entity cleanly, on your terms.",
     steps: [
       { number: 10, label: "Dissolution Details" },
       { number: 11, label: "Dissolution Resolution" },

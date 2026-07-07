@@ -20,7 +20,7 @@ export function StepArticlesOfAssociation({
   return (
     <Stage2DocumentStep
       title="Articles of Association (AoA)"
-      description="Now you are going to assemble the Articles of Association, the main governing document of your new entity. The template has been populated with the data you inputted in the previous steps. Please review the template and sign if you agree. The AoA has to be signed by all board members."
+      description="Assemble and review the Articles of Association — the main governing document of your association. The template is populated with the data from the previous steps; review and edit it here. The statutes are adopted by approval at the founding meeting (step 7), not signed here — signing is an optional formality by one or two board members, not a requirement."
       documentType="AOA"
       dispatch={dispatch}
       documentState={state.aoaDocument}

@@ -40,15 +40,14 @@ export function StepMultisigConfig({ state, dispatch, onNext, onBack }: Props) {
   const [availabilityThreshold, setAvailabilityThreshold] = useState(
     existing?.availabilityThreshold ?? "48 hours",
   );
-  const [internalPolicyLink, setInternalPolicyLink] = useState(
-    existing?.internalPolicyLink ?? "",
-  );
+  // Internal policy link & emergency procedures inputs are hidden for the MVP,
+  // but the values still flow to the model via handleSave (setters dropped since
+  // nothing edits them). The MPA template falls back gracefully when blank.
+  const [internalPolicyLink] = useState(existing?.internalPolicyLink ?? "");
   const [multisigDate, setMultisigDate] = useState(
     existing?.multisigDate ?? "",
   );
-  const [emergencyProcedures, setEmergencyProcedures] = useState(
-    existing?.emergencyProcedures ?? "",
-  );
+  const [emergencyProcedures] = useState(existing?.emergencyProcedures ?? "");
 
   function handleSave() {
     const resolvedPlatform =
@@ -272,40 +271,15 @@ export function StepMultisigConfig({ state, dispatch, onNext, onBack }: Props) {
                 className="sw-input"
               />
             </FormField>
-            <FormField
-              label="Internal Policy Link"
-              hint="URL to treasury / finance control policy"
-            >
-              <input
-                type="url"
-                value={internalPolicyLink}
-                onChange={(e) => setInternalPolicyLink(e.target.value)}
-                placeholder="https://notion.so/your-finance-policy"
-                className="sw-input"
-              />
-            </FormField>
+            {/* Internal Policy Link (finance/control policy URL) hidden for the
+                MVP — internalPolicyLink state + submit wiring retained; the MPA
+                template falls back to "N/A" when it is blank. */}
           </SectionCard>
 
-          <SectionCard title="Emergency Procedures">
-            <FormField
-              label="Emergency Key Recovery Procedure"
-              hint="Leave blank to use the default clause drafted by Claude"
-            >
-              <textarea
-                value={emergencyProcedures}
-                onChange={(e) => setEmergencyProcedures(e.target.value)}
-                rows={4}
-                placeholder="Leave blank to auto-populate with a standard emergency procedure clause..."
-                className="sw-input resize-none"
-              />
-            </FormField>
-            {!emergencyProcedures && (
-              <p className="text-xs text-slate-500 mt-1">
-                A default procedure covering key loss, incapacitation, and
-                dispute resolution will be inserted when the MPA is generated.
-              </p>
-            )}
-          </SectionCard>
+          {/* Emergency Procedures card hidden for the MVP — emergencyProcedures
+              state + submit wiring retained (defaults to blank, which the MPA
+              template handles via its own standing emergency-procedures clause).
+              Reintroduce this card to let users override that default. */}
 
           <div className="flex justify-between pt-2">
             <button onClick={onBack} className="sw-btn-secondary">
