@@ -72,6 +72,9 @@ export function Stage2DocumentStep({
   );
   const [previewMarkdown, setPreviewMarkdown] = useState<string | null>(null);
   const [showSource, setShowSource] = useState(false);
+  // The rendered document preview is collapsed by default — action buttons stay
+  // visible; generating or choosing a view expands it. A header re-collapses it.
+  const [previewOpen, setPreviewOpen] = useState(false);
   const isLocked = documentState?.isLocked === true;
   const isSigned = documentState?.isSigned === true;
   const markdown =
@@ -81,12 +84,14 @@ export function Stage2DocumentStep({
     setPreviewMarkdown(null);
     setGenerationMessage(null);
     setShowSource(false);
+    setPreviewOpen(false);
   }, [documentType, documentState?.signedAt, documentState?.isLocked]);
 
   function handleGenerate() {
     try {
       const nextMarkdown = generateMarkdown();
       setPreviewMarkdown(nextMarkdown);
+      setPreviewOpen(true);
 
       if (isLocked) {
         setGenerationMessage(
@@ -149,7 +154,10 @@ export function Stage2DocumentStep({
             </button>
             <button
               type="button"
-              onClick={() => setShowSource((current) => !current)}
+              onClick={() => {
+                setShowSource((current) => !current);
+                setPreviewOpen(true);
+              }}
               className="sw-btn-secondary"
             >
               {showSource ? "Show Document View" : "Show Markdown Source"}
@@ -173,20 +181,37 @@ export function Stage2DocumentStep({
           {generationMessage && (
             <p className="text-xs text-slate-500">{generationMessage}</p>
           )}
-          {showSource ? (
-            <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg">
-              <pre className="whitespace-pre-wrap text-sm text-slate-700">
-                {markdown}
-              </pre>
-            </div>
-          ) : (
-            <div className="bg-white border border-slate-200 rounded-lg p-8 shadow-sm">
-              <div
-                className="legal-doc max-w-none"
-                dangerouslySetInnerHTML={{ __html: markdownToHtml(markdown) }}
-              />
-            </div>
-          )}
+          {/* Collapsed by default — the buttons above stay usable; expanding is
+              opt-in so the long rendered document doesn't dominate the step. */}
+          <div className="border border-slate-200 rounded-lg overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setPreviewOpen((open) => !open)}
+              className="w-full flex items-center justify-between px-4 py-2.5 bg-slate-50 hover:bg-slate-100 transition-colors text-sm font-medium text-slate-700"
+            >
+              <span>{showSource ? "Markdown source" : "Document preview"}</span>
+              <span className="text-xs text-slate-400">
+                {previewOpen ? "Collapse ▲" : "Expand ▼"}
+              </span>
+            </button>
+            {previewOpen &&
+              (showSource ? (
+                <div className="p-4 bg-slate-50 border-t border-slate-200">
+                  <pre className="whitespace-pre-wrap text-sm text-slate-700">
+                    {markdown}
+                  </pre>
+                </div>
+              ) : (
+                <div className="bg-white border-t border-slate-200 p-8">
+                  <div
+                    className="legal-doc max-w-none"
+                    dangerouslySetInnerHTML={{
+                      __html: markdownToHtml(markdown),
+                    }}
+                  />
+                </div>
+              ))}
+          </div>
         </div>
       </SectionCard>
 

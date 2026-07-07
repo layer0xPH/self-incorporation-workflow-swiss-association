@@ -12,6 +12,8 @@ import { StepAssociationDetails } from "./components/StepAssociationDetails.js";
 import { StepMemberRegistry } from "./components/StepMemberRegistry.js";
 import { StepBoardSetup } from "./components/StepBoardSetup.js";
 import { StepFoundingMeeting } from "./components/StepFoundingMeeting.js";
+import { TreasuryGateway } from "./components/TreasuryGateway.js";
+import { M1Banner } from "./components/M1Banner.js";
 import { StepMultisigConfig } from "./components/StepMultisigConfig.js";
 import { StepArticlesOfAssociation } from "./components/StepArticlesOfAssociation.js";
 import { StepMultisigParticipationAgreement } from "./components/StepMultisigParticipationAgreement.js";
@@ -39,6 +41,9 @@ export default function Editor() {
 
   // Optional Suitability side-screen, reachable from Welcome (not a numbered step).
   const SUITABILITY_STEP = -1;
+  // Post-founding treasury gateway — its own page, reached from the founding
+  // step once M1 is signed. Not a numbered sidebar step.
+  const GATEWAY_STEP = -2;
 
   const stageProgress: StageProgress = {
     detailsDone: !!(
@@ -136,14 +141,14 @@ export default function Editor() {
           />
         );
       case 6:
-        // Back returns to the founding gateway (step 7) it was launched from;
-        // forward continues to the Multisig Participation Agreement (step 8).
+        // Back returns to the treasury gateway it was launched from; forward
+        // continues to the Multisig Participation Agreement (step 8).
         return (
           <StepMultisigConfig
             state={state}
             dispatch={safeDispatch}
             onNext={() => setCurrentStep(8)}
-            onBack={() => setCurrentStep(7)}
+            onBack={() => setCurrentStep(GATEWAY_STEP)}
           />
         );
       case 7:
@@ -151,6 +156,14 @@ export default function Editor() {
           <StepFoundingMeeting
             state={state}
             dispatch={safeDispatch}
+            onNext={() => setCurrentStep(GATEWAY_STEP)}
+            onBack={() => setCurrentStep(5)}
+          />
+        );
+      case GATEWAY_STEP:
+        return (
+          <TreasuryGateway
+            state={state}
             onSetupMultisig={() => {
               if (!state.stage2Started) {
                 safeDispatch(
@@ -159,8 +172,7 @@ export default function Editor() {
               }
               setCurrentStep(6);
             }}
-            onBack={() => setCurrentStep(5)}
-            onOpenAoa={() => setCurrentStep(4)}
+            onBack={() => setCurrentStep(7)}
           />
         );
       case 8:
@@ -277,6 +289,13 @@ export default function Editor() {
         onStepClick={handleStepClick}
         stageProgress={stageProgress}
       >
+        {/* Page-level M1 achievement — once legal personhood is reached it sits
+            at the top of every view as the moment that unlocks what follows. */}
+        {stageProgress.minutesSigned && (
+          <div className="mb-6">
+            <M1Banner state={state} onOpenAoa={() => setCurrentStep(4)} />
+          </div>
+        )}
         {isCurrentStepLocked ? (
           <ReadOnlyStepWrapper>{renderStep()}</ReadOnlyStepWrapper>
         ) : (

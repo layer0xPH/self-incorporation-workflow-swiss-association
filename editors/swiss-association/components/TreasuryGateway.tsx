@@ -7,8 +7,8 @@ interface Props {
   // Route into the multisig setup step (step 6). The caller also marks Stage 2
   // started so document generation can begin.
   onSetupMultisig: () => void;
-  // Reopen the executed Articles of Association (step 4).
-  onOpenAoa?: () => void;
+  // Return to the founding meeting step.
+  onBack: () => void;
 }
 
 type Choice = "yes" | "no" | null;
@@ -48,14 +48,14 @@ function ChoiceButtons({
   );
 }
 
-// The post-founding front door. Reached only once the founding minutes are
-// signed (Milestone M1), so the entity legally exists before any of this shows.
-// It routes the constituted entity to one of three honest endpoints:
+// The post-founding front door — its own page, reached only once the founding
+// minutes are signed (Milestone M1), so the entity legally exists before any of
+// this shows. It routes the constituted entity to one of three honest endpoints:
 //   • no treasury           → a deliberate minimal-liability wrapper (complete)
 //   • treasury + multisig   → the one built mechanism → multisig setup (step 6)
 //   • treasury, no multisig → intent captured, mechanism pending (not complete,
 //                             not incomplete — the only built rail is the multisig)
-export function TreasuryGateway({ state, onSetupMultisig, onOpenAoa }: Props) {
+export function TreasuryGateway({ state, onSetupMultisig, onBack }: Props) {
   const [treasury, setTreasury] = useState<Choice>(null);
   const [multisig, setMultisig] = useState<Choice>(null);
 
@@ -65,31 +65,15 @@ export function TreasuryGateway({ state, onSetupMultisig, onOpenAoa }: Props) {
   const multisigConfigured = !!state.multisig;
 
   return (
-    <div className="space-y-5">
-      {/* Milestone M1 — prominent, solid-green banner so the achievement reads
-          at a glance, not just as a colour change in the capability diagram. */}
-      <div className="p-5 bg-green-600 rounded-xl text-white shadow-sm">
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/20 text-xs font-semibold tracking-wide">
-          <span className="w-1.5 h-1.5 rounded-full bg-white" />
-          Milestone M1
-        </span>
-        <h3 className="text-lg font-semibold mt-2">
-          Legal personhood achieved
-        </h3>
-        <p className="text-sm text-green-50 mt-1">
-          {name} now exists as a legal person under Art. 60 ZGB. The founding is
-          complete — everything from here is an optional capability you add when
-          you need it.
+    <div className="max-w-3xl space-y-5">
+      <div>
+        <h2 className="text-xl font-semibold text-slate-900">
+          What&apos;s next?
+        </h2>
+        <p className="text-sm text-slate-500 mt-1">
+          {name} is constituted. Choose the first capability to add — or stop
+          here; a treasury-free association is a complete, valid endpoint.
         </p>
-        {onOpenAoa && (
-          <button
-            type="button"
-            onClick={onOpenAoa}
-            className="mt-3 inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium bg-white text-green-700 hover:bg-green-50 transition-colors"
-          >
-            Open Executed Articles of Association
-          </button>
-        )}
       </div>
 
       {multisigConfigured ? (
@@ -115,7 +99,7 @@ export function TreasuryGateway({ state, onSetupMultisig, onOpenAoa }: Props) {
           </div>
         </SectionCard>
       ) : (
-        <SectionCard title="What's next?">
+        <SectionCard title="Add a capability">
           <div className="space-y-4">
             <div>
               <p className="text-sm font-medium text-slate-800">
@@ -198,6 +182,12 @@ export function TreasuryGateway({ state, onSetupMultisig, onOpenAoa }: Props) {
           </div>
         </SectionCard>
       )}
+
+      <div className="pt-1">
+        <button type="button" onClick={onBack} className="sw-btn-secondary">
+          ← Back to founding
+        </button>
+      </div>
     </div>
   );
 }

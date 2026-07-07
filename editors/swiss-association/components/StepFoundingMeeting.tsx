@@ -6,24 +6,21 @@ import { setMeetingRoles } from "document-models/swiss-association";
 import { FormField } from "./FormField.js";
 import { SectionCard } from "./SectionCard.js";
 import { Stage2DocumentStep } from "./Stage2DocumentStep.js";
-import { TreasuryGateway } from "./TreasuryGateway.js";
 import { buildFoundingMinutesMarkdown } from "./stage2Templates.js";
 
 interface Props {
   state: SwissAssociationState;
   dispatch: DocumentDispatch<SwissAssociationAction>;
-  // Called from the post-founding gateway to route into multisig setup.
-  onSetupMultisig: () => void;
+  // Once the minutes are signed (M1), continue to the post-founding gateway.
+  onNext: () => void;
   onBack: () => void;
-  onOpenAoa?: () => void;
 }
 
 export function StepFoundingMeeting({
   state,
   dispatch,
-  onSetupMultisig,
+  onNext,
   onBack,
-  onOpenAoa,
 }: Props) {
   const [chairName, setChairName] = useState(state.chairName ?? "");
   const [secretaryName, setSecretaryName] = useState(state.secretaryName ?? "");
@@ -55,9 +52,6 @@ export function StepFoundingMeeting({
     chairName.trim() !== "" &&
     secretaryName.trim() !== "" &&
     (meetingIsOnline || meetingVenue.trim() !== "");
-  // Milestone M1 — the association legally exists. Gates the post-founding
-  // gateway (see TreasuryGateway).
-  const minutesSigned = state.foundingMinutesDocument?.isSigned === true;
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -146,28 +140,19 @@ export function StepFoundingMeeting({
       </SectionCard>
 
       {rolesSaved && (
-        <>
-          <Stage2DocumentStep
-            title="Founding Meeting Minutes"
-            description="Review the Founding Meeting Minutes generated from the data you provided. Sign to confirm the official record of the founding."
-            documentType="FOUNDING_MINUTES"
-            dispatch={dispatch}
-            documentState={state.foundingMinutesDocument}
-            generateMarkdown={() => buildFoundingMinutesMarkdown(state)}
-            onBack={onBack}
-            lockedHint="The Founding Meeting Minutes are now locked and cannot be edited."
-          />
-
-          {/* Once the minutes are signed (M1), the founding is done and the
-              forward flow becomes the treasury gateway — not a linear "next". */}
-          {minutesSigned && (
-            <TreasuryGateway
-              state={state}
-              onSetupMultisig={onSetupMultisig}
-              onOpenAoa={onOpenAoa}
-            />
-          )}
-        </>
+        <Stage2DocumentStep
+          title="Founding Meeting Minutes"
+          description="Review the Founding Meeting Minutes generated from the data you provided. Sign to confirm the official record of the founding."
+          documentType="FOUNDING_MINUTES"
+          dispatch={dispatch}
+          documentState={state.foundingMinutesDocument}
+          generateMarkdown={() => buildFoundingMinutesMarkdown(state)}
+          onBack={onBack}
+          onNext={onNext}
+          nextLabel="What's next →"
+          nextRequiresSigned={true}
+          lockedHint="The Founding Meeting Minutes are now locked and cannot be edited."
+        />
       )}
     </div>
   );
