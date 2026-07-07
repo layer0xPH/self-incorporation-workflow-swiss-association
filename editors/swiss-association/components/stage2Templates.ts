@@ -213,6 +213,17 @@ export function buildAoaMarkdown(state: SwissAssociationState) {
   const date = formatDate(state.foundingDate);
   const city = state.seatCity || "Zug";
 
+  // Adoption is effected by APPROVAL at the founding assembly (step 7), never by
+  // the optional signing at step 4. So every "adopted / in force" claim in the
+  // AoA is conditional on the founding minutes being signed — a draft before (no
+  // past tense, no date), the dated fact after, with the date taken from the
+  // founding meeting (the minutes' signedAt, falling back to the founding date),
+  // NOT from the AoA's own optional sign action.
+  const adopted = state.foundingMinutesDocument?.isSigned === true;
+  const adoptionDate = formatDate(
+    state.foundingMinutesDocument?.signedAt || state.foundingDate,
+  );
+
   // The registered street address is optional. The registered office renders
   // from the full address when present, otherwise from the municipality +
   // canton alone (a Swiss Verein is validly seated on that basis). This also
@@ -271,6 +282,17 @@ export function buildAoaMarkdown(state: SwissAssociationState) {
     )}\n`;
   }
 
+  // The template's own "entry into force" clause is likewise conditional on
+  // adoption — the statutes are only in force once the founding assembly adopts
+  // them (same signal as the adoption statement below).
+  template = replaceToken(
+    template,
+    "The Members have adopted the present Articles of Association. The present Articles of Association have entered into force today.",
+    adopted
+      ? `The Members have adopted the present Articles of Association. The present Articles of Association entered into force on ${adoptionDate}.`
+      : "The present Articles of Association will enter into force upon adoption by the founding assembly.",
+  );
+
   // Adoption of a non-commercial Verein's statutes is effected by APPROVAL at
   // the founding assembly (step 7) — signing the statutes is not legally
   // mandatory. The AoA drafted here is the instrument; the mandatory signatures
@@ -281,8 +303,12 @@ export function buildAoaMarkdown(state: SwissAssociationState) {
     ? state.boardMembers
     : state.members || [];
   const optionalSigner = boardSigners[0];
+
+  const adoptionStatement = adopted
+    ? `These Articles of Association were adopted by the founding assembly of **${associationName}** on **${adoptionDate}** in **${city}**, Switzerland. Signing the statutes is an optional formality — adoption is effected by the assembly's approval, with the mandatory signatures recorded on the founding meeting minutes.`
+    : `These Articles of Association are submitted for adoption by the founding assembly of **${associationName}**. Until the assembly approves them at the founding meeting they remain a draft — signing here is an optional formality by one or two board members, and the mandatory signatures (chair + secretary) are recorded on the founding meeting minutes.`;
   template += buildSignatureSection(
-    `These Articles of Association were adopted by the founding assembly of **${associationName}** on **${date}** in **${city}**, Switzerland. Signing the statutes is an optional formality — adoption is effected by the assembly's approval, with the mandatory signatures recorded on the founding meeting minutes.`,
+    adoptionStatement,
     optionalSigner
       ? [
           {

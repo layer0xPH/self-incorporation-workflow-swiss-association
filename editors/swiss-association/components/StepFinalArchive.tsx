@@ -2,6 +2,7 @@ import { showRevisionHistory } from "@powerhousedao/reactor-browser";
 import type { SwissAssociationState } from "document-models/swiss-association";
 import { SectionCard } from "./SectionCard.js";
 import { openPrintWindow } from "./documentRender.js";
+import { buildAoaMarkdown } from "./stage2Templates.js";
 
 interface Props {
   state: SwissAssociationState;
@@ -15,22 +16,25 @@ interface Props {
 // "Open revision history" opens the association document's audit trail (via the
 // global showRevisionHistory() — no doc-id needed; it targets the selected
 // document), where each signing shows as a MARK_STAGE2_DOCUMENT_SIGNED
-// operation. The inline "Signed · <timestamp>" is the proof-of-execution label.
+// operation. The inline "<dateLabel> · <timestamp>" is the proof-of-execution
+// label — "Signed" for most docs, "Adopted" (founding-meeting date) for the AoA.
 function SignedDocCard({
   title,
   markdown,
   signedAt,
+  dateLabel = "Signed",
 }: {
   title: string;
   markdown: string | null | undefined;
   signedAt: string | null | undefined;
+  dateLabel?: string;
 }) {
   return (
     <div className="p-4 bg-white border border-slate-200 rounded-lg flex items-center justify-between gap-4">
       <div>
         <p className="text-sm font-semibold text-slate-900">{title}</p>
         <p className="text-xs text-slate-500 mt-0.5">
-          Signed ·{" "}
+          {dateLabel} ·{" "}
           {signedAt ? new Date(signedAt).toLocaleString() : "Not signed"}
         </p>
       </div>
@@ -59,14 +63,45 @@ export function StepFinalArchive({ state, onBack }: Props) {
   const associationName = state.nameEn || state.nameDe || "Association";
 
   // Signed-only — the archive is the record of what was actually executed.
+  // The AoA is adopted at the founding meeting (after it is signed/locked at
+  // step 4), so its archived copy is re-rendered from live state — the frozen
+  // step-4 markdown is only the pre-adoption draft. The others show their signed
+  // (frozen) markdown as executed.
+  const aoaAdopted = state.foundingMinutesDocument?.isSigned === true;
   const singletons = [
-    { title: "Articles of Association (AoA)", doc: state.aoaDocument },
+    {
+      title: "Articles of Association (AoA)",
+      doc: state.aoaDocument,
+      markdown: buildAoaMarkdown(state),
+      // The AoA's meaningful date is its ADOPTION (founding meeting), matching
+      // the body ("adopted on …"). Before adoption it is only a signed draft,
+      // so fall back to its own step-4 signed timestamp.
+      dateLabel: aoaAdopted ? "Adopted" : "Signed",
+      date: aoaAdopted
+        ? state.foundingMinutesDocument?.signedAt || state.foundingDate
+        : state.aoaDocument?.signedAt,
+    },
     {
       title: "Regulation of the General Assembly",
       doc: state.regGaDocument,
+      markdown: state.regGaDocument?.markdown,
+      dateLabel: "Signed",
+      date: state.regGaDocument?.signedAt,
     },
-    { title: "Founding Meeting Minutes", doc: state.foundingMinutesDocument },
-    { title: "Multisig Participation Agreement (MPA)", doc: state.mpaDocument },
+    {
+      title: "Founding Meeting Minutes",
+      doc: state.foundingMinutesDocument,
+      markdown: state.foundingMinutesDocument?.markdown,
+      dateLabel: "Signed",
+      date: state.foundingMinutesDocument?.signedAt,
+    },
+    {
+      title: "Multisig Participation Agreement (MPA)",
+      doc: state.mpaDocument,
+      markdown: state.mpaDocument?.markdown,
+      dateLabel: "Signed",
+      date: state.mpaDocument?.signedAt,
+    },
   ].filter((entry) => entry.doc?.isSigned === true);
 
   // Contributor agreements are a collection — surface each signed one.
@@ -105,8 +140,9 @@ export function StepFinalArchive({ state, onBack }: Props) {
               <SignedDocCard
                 key={entry.title}
                 title={entry.title}
-                markdown={entry.doc?.markdown}
-                signedAt={entry.doc?.signedAt}
+                markdown={entry.markdown}
+                dateLabel={entry.dateLabel}
+                signedAt={entry.date}
               />
             ))}
             {signedContributors.map((c) => (

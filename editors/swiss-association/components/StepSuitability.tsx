@@ -90,7 +90,7 @@ function computeVerdict(
   }
   if (jurisdiction === "same") {
     notes.push(
-      "Heads-up: if most members operate from a single non-Swiss jurisdiction, this can raise tax-residency considerations for the association, because a small association is often effectively managed by its members. You'll review this in more detail when you add members, and it's worth discussing with a tax advisor. This is not tax advice.",
+      "Heads-up: if most members operate from a single non-Swiss jurisdiction, this may raise tax-residency considerations for the association. Please consult a tax or legal advisor. (This is not legal or tax advice.)",
     );
   }
   if (investment === "maybe") {
@@ -234,6 +234,60 @@ export function StepSuitability({ onContinue, onBack }: Props) {
           />
         </FormField>
 
+        {/* Deterministic verdict renders directly under the structural inputs
+            (Q1–Q3) that drive it — not in a later combined panel, and never
+            co-located with the AI purpose assessment (which sits under Q4). */}
+        {result && meta && (
+          <div className={`p-5 border rounded-xl ${meta.box}`}>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-black/10 bg-white/70 px-2.5 py-1 text-[11px] font-semibold text-slate-700">
+              <span aria-hidden="true">⚖️</span>
+              Rule-based result · definitive
+            </span>
+            <p className={`text-base font-semibold mt-2 ${meta.title}`}>
+              {meta.heading}
+            </p>
+            <p className={`text-sm mt-1 ${meta.title}`}>{meta.message}</p>
+
+            {result.reasons.length > 0 && (
+              <ul className="mt-3 space-y-2">
+                {result.reasons.map((r, i) => (
+                  <li
+                    key={i}
+                    className="flex items-start gap-2 text-sm text-red-800"
+                  >
+                    <span className="mt-0.5 flex-shrink-0">•</span>
+                    <span>{r}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {result.notes.length > 0 && (
+              <ul className="mt-3 space-y-2">
+                {result.notes.map((n, i) => (
+                  <li
+                    key={i}
+                    className="flex items-start gap-2 text-xs text-slate-600"
+                  >
+                    <span className="mt-0.5 flex-shrink-0">›</span>
+                    <span>{n}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <p className="mt-4 pt-3 border-t border-black/10 text-xs text-slate-600">
+              {DISCLAIMER}
+            </p>
+          </div>
+        )}
+
+        {!ready && (
+          <p className="text-xs text-slate-400">
+            Answer questions 1, 2 and 3 to see your result.
+          </p>
+        )}
+
         <FormField
           label="4. What is your organization's purpose?"
           hint="Describe what you're building and why."
@@ -255,11 +309,15 @@ export function StepSuitability({ onContinue, onBack }: Props) {
             </button>
 
             {assessment && (
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-blue-700">
-                  Automated assessment
+              // AI-assisted, advisory. Dashed border + prominent badge mark it
+              // as different IN KIND from the deterministic rule-based verdict
+              // (under Q3) — an opinion on free text, never a pass/fail result.
+              <div className="p-4 bg-blue-50 border border-dashed border-blue-300 rounded-lg">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-2.5 py-1 text-[11px] font-semibold text-blue-700">
+                  <span aria-hidden="true">✨</span>
+                  AI-assisted · informational only
                 </span>
-                <p className="mt-1 text-sm font-semibold text-slate-900">
+                <p className="mt-2 text-sm font-semibold text-slate-900">
                   {verdictLabel(assessment.verdict)}
                 </p>
                 <p className="mt-1 text-sm text-slate-700">
@@ -279,61 +337,16 @@ export function StepSuitability({ onContinue, onBack }: Props) {
                   </ul>
                 )}
                 <p className="mt-3 pt-2 border-t border-blue-200 text-xs text-slate-500">
-                  Automated, informational only — not legal advice. Confirm with
-                  qualified Swiss counsel.
+                  An AI judgment on your free-text description — advisory only.
+                  It does <span className="font-semibold">not</span> affect the
+                  rule-based result under Q3 and is not legal advice. If
+                  anything is unclear, consult qualified Swiss counsel.
                 </p>
               </div>
             )}
           </div>
         </FormField>
       </SectionCard>
-
-      {result && meta && (
-        <div className={`p-5 border rounded-xl ${meta.box}`}>
-          <p className={`text-base font-semibold ${meta.title}`}>
-            {meta.heading}
-          </p>
-          <p className={`text-sm mt-1 ${meta.title}`}>{meta.message}</p>
-
-          {result.reasons.length > 0 && (
-            <ul className="mt-3 space-y-2">
-              {result.reasons.map((r, i) => (
-                <li
-                  key={i}
-                  className="flex items-start gap-2 text-sm text-red-800"
-                >
-                  <span className="mt-0.5 flex-shrink-0">•</span>
-                  <span>{r}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {result.notes.length > 0 && (
-            <ul className="mt-3 space-y-2">
-              {result.notes.map((n, i) => (
-                <li
-                  key={i}
-                  className="flex items-start gap-2 text-xs text-slate-600"
-                >
-                  <span className="mt-0.5 flex-shrink-0">›</span>
-                  <span>{n}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          <p className="mt-4 pt-3 border-t border-black/10 text-xs text-slate-600">
-            {DISCLAIMER}
-          </p>
-        </div>
-      )}
-
-      {!ready && (
-        <p className="text-xs text-slate-400">
-          Answer questions 1, 2 and 3 to see your result.
-        </p>
-      )}
 
       <div className="flex justify-between pt-2">
         <button onClick={onBack} className="sw-btn-secondary">
