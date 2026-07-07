@@ -13,7 +13,8 @@ import { StepMemberRegistry } from "./components/StepMemberRegistry.js";
 import { StepBoardSetup } from "./components/StepBoardSetup.js";
 import { StepFoundingMeeting } from "./components/StepFoundingMeeting.js";
 import { TreasuryGateway } from "./components/TreasuryGateway.js";
-import { M1Banner } from "./components/M1Banner.js";
+import { MilestonePage } from "./components/MilestonePage.js";
+import { StepFinalArchive } from "./components/StepFinalArchive.js";
 import { StepMultisigConfig } from "./components/StepMultisigConfig.js";
 import { StepArticlesOfAssociation } from "./components/StepArticlesOfAssociation.js";
 import { StepMultisigParticipationAgreement } from "./components/StepMultisigParticipationAgreement.js";
@@ -27,6 +28,11 @@ import { isStepLocked } from "./components/stages.js";
 export default function Editor() {
   const [document, dispatch] = useSelectedSwissAssociationDocument();
   const [currentStep, setCurrentStep] = useState(0);
+  // Where the archive returns to — set when it's opened from any step.
+  const [archiveReturnStep, setArchiveReturnStep] = useState(0);
+  // The gateway's no-treasury choice (local, like the gateway itself). Drives
+  // the enriched "deliberately minimal" capability view.
+  const [noTreasury, setNoTreasury] = useState(false);
 
   if (!document || !dispatch) {
     return (
@@ -44,13 +50,25 @@ export default function Editor() {
   // Post-founding treasury gateway — its own page, reached from the founding
   // step once M1 is signed. Not a numbered sidebar step.
   const GATEWAY_STEP = -2;
+  // Dedicated M1 milestone screen, shown once between founding and the gateway.
+  const MILESTONE_STEP = -3;
+  // Executed-documents archive — reachable from any step and the milestone page.
+  const ARCHIVE_STEP = -4;
+
+  // Open the archive, remembering where to return (unless already there).
+  function openArchive() {
+    if (currentStep !== ARCHIVE_STEP) setArchiveReturnStep(currentStep);
+    setCurrentStep(ARCHIVE_STEP);
+  }
 
   const stageProgress: StageProgress = {
+    // Registered address is optional (a domicile provider can supply it later),
+    // so it must NOT gate step-1 completion — only name, purpose, city + canton.
     detailsDone: !!(
       state.nameEn &&
+      state.purposeEn &&
       state.seatCity &&
-      state.registeredAddress &&
-      state.purposeEn
+      state.seatCanton
     ),
     membersDone: (state.members?.length ?? 0) >= 2,
     boardDone: (state.boardMembers?.length ?? 0) >= 1,
@@ -156,8 +174,24 @@ export default function Editor() {
           <StepFoundingMeeting
             state={state}
             dispatch={safeDispatch}
-            onNext={() => setCurrentStep(GATEWAY_STEP)}
+            onNext={() => setCurrentStep(MILESTONE_STEP)}
             onBack={() => setCurrentStep(5)}
+          />
+        );
+      case MILESTONE_STEP:
+        return (
+          <MilestonePage
+            state={state}
+            onContinue={() => setCurrentStep(GATEWAY_STEP)}
+            onOpenArchive={openArchive}
+            onBack={() => setCurrentStep(7)}
+          />
+        );
+      case ARCHIVE_STEP:
+        return (
+          <StepFinalArchive
+            state={state}
+            onBack={() => setCurrentStep(archiveReturnStep)}
           />
         );
       case GATEWAY_STEP:
@@ -172,7 +206,8 @@ export default function Editor() {
               }
               setCurrentStep(6);
             }}
-            onBack={() => setCurrentStep(7)}
+            onNoTreasuryChange={setNoTreasury}
+            onBack={() => setCurrentStep(MILESTONE_STEP)}
           />
         );
       case 8:
@@ -288,14 +323,9 @@ export default function Editor() {
         currentStep={currentStep}
         onStepClick={handleStepClick}
         stageProgress={stageProgress}
+        onOpenArchive={openArchive}
+        shieldCo={noTreasury}
       >
-        {/* Page-level M1 achievement — once legal personhood is reached it sits
-            at the top of every view as the moment that unlocks what follows. */}
-        {stageProgress.minutesSigned && (
-          <div className="mb-6">
-            <M1Banner state={state} onOpenAoa={() => setCurrentStep(4)} />
-          </div>
-        )}
         {isCurrentStepLocked ? (
           <ReadOnlyStepWrapper>{renderStep()}</ReadOnlyStepWrapper>
         ) : (

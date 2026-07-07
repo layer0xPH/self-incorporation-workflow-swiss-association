@@ -376,12 +376,14 @@ interface ProgressSidebarProps {
   progress: StageProgress;
   currentStep: number;
   onStepClick: (step: number) => void;
+  onOpenArchive: () => void;
 }
 
 export function ProgressSidebar({
   progress,
   currentStep,
   onStepClick,
+  onOpenArchive,
 }: ProgressSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
 
@@ -495,6 +497,16 @@ export function ProgressSidebar({
           />
         ))}
       </div>
+
+      {/* Persistent access to the executed-documents archive — reachable from
+          any step, independent of the founding flow. */}
+      <button
+        onClick={onOpenArchive}
+        className="mt-4 mb-4 w-full flex items-center gap-2 px-2.5 py-2 rounded-lg border border-slate-200 text-[11px] font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+      >
+        <span aria-hidden="true">🗂️</span>
+        Executed documents
+      </button>
     </aside>
   );
 }

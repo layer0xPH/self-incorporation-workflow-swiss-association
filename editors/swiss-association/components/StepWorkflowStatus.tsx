@@ -263,12 +263,14 @@ export function StepWorkflowStatus({
   const allComplete = state.phases.every((p) => p.status === "COMPLETE");
   const hasExecutedSignature = state.phases.some((p) => p.documentsSigned);
 
-  // Derived completion flags for the progress overview
+  // Derived completion flags for the progress overview. Registered address is
+  // optional (a domicile provider can supply it later) and must NOT gate
+  // completion — mirrors the step-1 criteria in editor.tsx.
   const detailsDone = !!(
     state.nameEn &&
+    state.purposeEn &&
     state.seatCity &&
-    state.registeredAddress &&
-    state.purposeEn
+    state.seatCanton
   );
   const membersDone = (state.members?.length ?? 0) >= 2;
   const boardDone = (state.boardMembers?.length ?? 0) >= 1;

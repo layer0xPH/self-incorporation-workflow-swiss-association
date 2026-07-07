@@ -8,6 +8,10 @@ interface WizardLayoutProps {
   onStepClick: (step: number) => void;
   children: ReactNode;
   stageProgress?: StageProgress;
+  onOpenArchive: () => void;
+  // When the user took the no-treasury route, the capability diagram switches to
+  // the enriched "deliberately minimal" (ShieldCo) mode.
+  shieldCo?: boolean;
 }
 
 export function WizardLayout({
@@ -15,6 +19,8 @@ export function WizardLayout({
   onStepClick,
   children,
   stageProgress,
+  onOpenArchive,
+  shieldCo = false,
 }: WizardLayoutProps) {
   return (
     <div className="swiss-wizard min-h-screen bg-slate-50">
@@ -56,12 +62,15 @@ export function WizardLayout({
             progress={stageProgress}
             currentStep={currentStep}
             onStepClick={onStepClick}
+            onOpenArchive={onOpenArchive}
           />
         )}
       </div>
 
       {/* Full-width capability summary — hub-and-spokes, below the content. */}
-      {stageProgress && <CapabilityFlow progress={stageProgress} />}
+      {stageProgress && (
+        <CapabilityFlow progress={stageProgress} shieldCo={shieldCo} />
+      )}
     </div>
   );
 }

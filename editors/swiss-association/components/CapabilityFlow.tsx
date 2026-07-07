@@ -119,7 +119,63 @@ function CapabilityNode({
   );
 }
 
-export function CapabilityFlow({ progress }: { progress: StageProgress }) {
+// A single capability line inside the enriched ShieldCo core: a white check for
+// what the entity does, a neutral dash for what it deliberately does not do
+// (never a red cross — the omissions are a choice, not a deficiency).
+function ShieldCapLine({
+  x,
+  y,
+  label,
+  kind,
+}: {
+  x: number;
+  y: number;
+  label: string;
+  kind: "has" | "not";
+}) {
+  const textFill = kind === "has" ? "#ffffff" : "rgba(255,255,255,0.82)";
+  return (
+    <g>
+      {kind === "has" ? (
+        <path
+          d={`M ${x} ${y} l 2.4 2.7 l 5 -6`}
+          fill="none"
+          stroke="#ffffff"
+          strokeWidth={1.8}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      ) : (
+        <line
+          x1={x}
+          y1={y}
+          x2={x + 7}
+          y2={y}
+          stroke="rgba(255,255,255,0.7)"
+          strokeWidth={1.8}
+          strokeLinecap="round"
+        />
+      )}
+      <text x={x + 15} y={y + 4} fontSize={10.5} fill={textFill}>
+        {label}
+      </text>
+    </g>
+  );
+}
+
+export function CapabilityFlow({
+  progress,
+  shieldCo = false,
+}: {
+  progress: StageProgress;
+  shieldCo?: boolean;
+}) {
+  // Enriched "deliberately minimal" view — only on the no-treasury (ShieldCo)
+  // route, and never when a multisig exists (that would contradict "no
+  // treasury"). Otherwise the normal capability progression shows.
+  const showShieldCo =
+    shieldCo && progress.minutesSigned && !progress.hasMultisig;
+
   // Core (required) + three independent optional branches.
   const core: FlowNode = {
     reached: progress.minutesSigned,
@@ -163,104 +219,275 @@ export function CapabilityFlow({ progress }: { progress: StageProgress }) {
     { y: 138, h: 26, label: "Tax ID" },
   ];
 
+  // ShieldCo enrichment geometry — a taller, richer core card on the left with
+  // the not-pursued branches dimmed to its right.
+  const shieldCore = { x: 24, y: 22, w: 492, h: 188 };
+  const shieldHub = {
+    x: shieldCore.x + shieldCore.w,
+    y: shieldCore.y + shieldCore.h / 2,
+  };
+  const shieldBranchX = 700;
+  const shieldBranchW = 300;
+  const shieldBranchH = 40;
+  const shieldBranchGeom = [{ y: 60 }, { y: 108 }, { y: 156 }];
+
   return (
     <section className="swiss-wizard-capabilities w-full bg-white border-t border-slate-200 px-8 py-5">
       <p className="text-[11px] font-semibold text-slate-500 mb-3">
-        What your entity can do — the core stands alone; the rest are optional.
+        {showShieldCo
+          ? "You've kept it deliberately minimal — the same Verein every founding creates, complete as a legal person from day one. The other capabilities stay available whenever you want them."
+          : "What your entity can do — the core stands alone; the rest are optional."}
       </p>
       <div className="w-full max-w-6xl mx-auto">
         <svg
-          viewBox="0 0 1180 176"
+          viewBox={showShieldCo ? "0 0 1180 220" : "0 0 1180 176"}
           width="100%"
           role="img"
-          aria-label="Entity capabilities: one required core with three optional branches; the invoicing branch has two external dependencies"
+          aria-label={
+            showShieldCo
+              ? "Entity capabilities: a deliberately minimal, complete legal person that holds rights, signs contracts and bounds liability, with treasury, contracting and invoicing left unpursued but available"
+              : "Entity capabilities: one required core with three optional branches; the invoicing branch has two external dependencies"
+          }
           style={{ fontFamily: "inherit", display: "block" }}
         >
-          {/* Spokes (drawn first so nodes sit on top). Green when the branch is
-              achieved, soft slate when it is simply available. */}
-          {branchGeom.map((g, i) => {
-            const by = g.y + g.h / 2;
-            const midX = (hub.x + branchX) / 2;
-            return (
-              <path
-                key={`spoke-${i}`}
-                d={`M ${hub.x} ${hub.y} C ${midX} ${hub.y} ${midX} ${by} ${branchX} ${by}`}
-                fill="none"
-                stroke={branches[i].reached ? GREEN : SLATE_300}
-                strokeWidth={2.25}
-                strokeLinecap="round"
+          {showShieldCo ? (
+            <>
+              {/* Faint, dashed spokes — branches available but not taken. */}
+              {shieldBranchGeom.map((g, i) => {
+                const by = g.y + shieldBranchH / 2;
+                const midX = (shieldHub.x + shieldBranchX) / 2;
+                return (
+                  <path
+                    key={`s-spoke-${i}`}
+                    d={`M ${shieldHub.x} ${shieldHub.y} C ${midX} ${shieldHub.y} ${midX} ${by} ${shieldBranchX} ${by}`}
+                    fill="none"
+                    stroke={SLATE_200}
+                    strokeWidth={1.5}
+                    strokeDasharray="3 3"
+                    strokeLinecap="round"
+                  />
+                );
+              })}
+
+              {/* Enriched core — the deliberately-minimal, complete entity. */}
+              <rect
+                x={shieldCore.x}
+                y={shieldCore.y}
+                width={shieldCore.w}
+                height={shieldCore.h}
+                rx={16}
+                fill={GREEN}
+                stroke={GREEN_DK}
+                strokeWidth={2}
               />
-            );
-          })}
-          {/* Hub anchor where the spokes fan out from the core. */}
-          <circle cx={hub.x} cy={hub.y} r={3.5} fill={SLATE_400} />
-
-          {/* Dependency feeders — from each dep chip into the invoice node. */}
-          {invoiceDeps.map((d, i) => {
-            const dcy = d.y + d.h / 2;
-            return (
-              <path
-                key={`dep-line-${i}`}
-                d={`M ${depX} ${dcy} C ${depX - 30} ${dcy} ${depX - 30} ${invoiceCy} ${branchRight} ${invoiceCy}`}
-                fill="none"
-                stroke={SLATE_200}
-                strokeWidth={1.5}
-                strokeLinecap="round"
+              <rect
+                x={44}
+                y={38}
+                width={228}
+                height={19}
+                rx={9.5}
+                fill="rgba(255,255,255,0.18)"
               />
-            );
-          })}
+              <circle cx={55} cy={47.5} r={2.5} fill="#ffffff" />
+              <text
+                x={64}
+                y={51}
+                fontSize={9.5}
+                fontWeight={700}
+                letterSpacing="0.5"
+                fill="#ffffff"
+              >
+                DELIBERATELY MINIMAL · COMPLETE
+              </text>
+              <text x={44} y={83} fontSize={17} fontWeight={700} fill="#ffffff">
+                Exists as a legal person
+              </text>
+              <text
+                x={44}
+                y={102}
+                fontSize={10.5}
+                fill="rgba(255,255,255,0.85)"
+              >
+                The same Verein, deliberately kept minimal · Art. 60 ZGB
+              </text>
+              <line
+                x1={44}
+                y1={115}
+                x2={496}
+                y2={115}
+                stroke="rgba(255,255,255,0.25)"
+                strokeWidth={1}
+              />
+              <text
+                x={44}
+                y={133}
+                fontSize={9}
+                fontWeight={700}
+                letterSpacing="0.5"
+                fill="rgba(255,255,255,0.7)"
+              >
+                WHAT IT DOES
+              </text>
+              <ShieldCapLine
+                x={46}
+                y={149}
+                kind="has"
+                label="Holds rights & property"
+              />
+              <ShieldCapLine
+                x={46}
+                y={168}
+                kind="has"
+                label="Signs contracts in its own name"
+              />
+              <ShieldCapLine
+                x={46}
+                y={187}
+                kind="has"
+                label="Liability rests with the entity"
+              />
+              <text
+                x={282}
+                y={133}
+                fontSize={9}
+                fontWeight={700}
+                letterSpacing="0.5"
+                fill="rgba(255,255,255,0.7)"
+              >
+                DELIBERATELY NOT
+              </text>
+              <ShieldCapLine x={284} y={149} kind="not" label="No treasury" />
+              <ShieldCapLine
+                x={284}
+                y={168}
+                kind="not"
+                label="No payment flows"
+              />
+              <ShieldCapLine
+                x={284}
+                y={187}
+                kind="not"
+                label="No ongoing operations"
+              />
 
-          <CapabilityNode
-            x={coreBox.x}
-            y={coreBox.y}
-            w={coreBox.w}
-            h={coreBox.h}
-            node={core}
-            emphasized
-          />
-          {branchGeom.map((g, i) => (
-            <CapabilityNode
-              key={`branch-${i}`}
-              x={branchX}
-              y={g.y}
-              w={branchW}
-              h={g.h}
-              node={branches[i]}
-            />
-          ))}
-
-          {/* External dependency chips (SVG-only, muted). */}
-          <text
-            x={depX}
-            y={96}
-            fontSize={8}
-            fontWeight={700}
-            letterSpacing="0.5"
-            fill={SLATE_400}
-          >
-            EXTERNAL DEPENDENCIES
-          </text>
-          {invoiceDeps.map((d, i) => {
-            const dcy = d.y + d.h / 2;
-            return (
-              <g key={`dep-${i}`}>
-                <rect
-                  x={depX}
-                  y={d.y}
-                  width={depW}
-                  height={d.h}
-                  rx={8}
-                  fill="#f8fafc"
-                  stroke={SLATE_200}
-                  strokeWidth={1}
-                />
-                <circle cx={depX + 13} cy={dcy} r={2.5} fill={SLATE_300} />
-                <text x={depX + 24} y={dcy + 3} fontSize={9} fill={SLATE_500}>
-                  {d.label}
-                </text>
+              {/* Not-pursued branches — dimmed, available anytime. */}
+              <text
+                x={shieldBranchX}
+                y={46}
+                fontSize={9}
+                fontWeight={700}
+                letterSpacing="0.5"
+                fill={SLATE_400}
+              >
+                NOT PURSUED — AVAILABLE ANYTIME
+              </text>
+              <g opacity={0.4}>
+                {shieldBranchGeom.map((g, i) => (
+                  <CapabilityNode
+                    key={`s-branch-${i}`}
+                    x={shieldBranchX}
+                    y={g.y}
+                    w={shieldBranchW}
+                    h={shieldBranchH}
+                    node={{ reached: false, title: branches[i].title }}
+                  />
+                ))}
               </g>
-            );
-          })}
+            </>
+          ) : (
+            <>
+              {/* Spokes (drawn first so nodes sit on top). Green when the branch is
+              achieved, soft slate when it is simply available. */}
+              {branchGeom.map((g, i) => {
+                const by = g.y + g.h / 2;
+                const midX = (hub.x + branchX) / 2;
+                return (
+                  <path
+                    key={`spoke-${i}`}
+                    d={`M ${hub.x} ${hub.y} C ${midX} ${hub.y} ${midX} ${by} ${branchX} ${by}`}
+                    fill="none"
+                    stroke={branches[i].reached ? GREEN : SLATE_300}
+                    strokeWidth={2.25}
+                    strokeLinecap="round"
+                  />
+                );
+              })}
+              {/* Hub anchor where the spokes fan out from the core. */}
+              <circle cx={hub.x} cy={hub.y} r={3.5} fill={SLATE_400} />
+
+              {/* Dependency feeders — from each dep chip into the invoice node. */}
+              {invoiceDeps.map((d, i) => {
+                const dcy = d.y + d.h / 2;
+                return (
+                  <path
+                    key={`dep-line-${i}`}
+                    d={`M ${depX} ${dcy} C ${depX - 30} ${dcy} ${depX - 30} ${invoiceCy} ${branchRight} ${invoiceCy}`}
+                    fill="none"
+                    stroke={SLATE_200}
+                    strokeWidth={1.5}
+                    strokeLinecap="round"
+                  />
+                );
+              })}
+
+              <CapabilityNode
+                x={coreBox.x}
+                y={coreBox.y}
+                w={coreBox.w}
+                h={coreBox.h}
+                node={core}
+                emphasized
+              />
+              {branchGeom.map((g, i) => (
+                <CapabilityNode
+                  key={`branch-${i}`}
+                  x={branchX}
+                  y={g.y}
+                  w={branchW}
+                  h={g.h}
+                  node={branches[i]}
+                />
+              ))}
+
+              {/* External dependency chips (SVG-only, muted). */}
+              <text
+                x={depX}
+                y={96}
+                fontSize={8}
+                fontWeight={700}
+                letterSpacing="0.5"
+                fill={SLATE_400}
+              >
+                EXTERNAL DEPENDENCIES
+              </text>
+              {invoiceDeps.map((d, i) => {
+                const dcy = d.y + d.h / 2;
+                return (
+                  <g key={`dep-${i}`}>
+                    <rect
+                      x={depX}
+                      y={d.y}
+                      width={depW}
+                      height={d.h}
+                      rx={8}
+                      fill="#f8fafc"
+                      stroke={SLATE_200}
+                      strokeWidth={1}
+                    />
+                    <circle cx={depX + 13} cy={dcy} r={2.5} fill={SLATE_300} />
+                    <text
+                      x={depX + 24}
+                      y={dcy + 3}
+                      fontSize={9}
+                      fill={SLATE_500}
+                    >
+                      {d.label}
+                    </text>
+                  </g>
+                );
+              })}
+            </>
+          )}
         </svg>
       </div>
     </section>

@@ -11,7 +11,7 @@ import { buildFoundingMinutesMarkdown } from "./stage2Templates.js";
 interface Props {
   state: SwissAssociationState;
   dispatch: DocumentDispatch<SwissAssociationAction>;
-  // Once the minutes are signed (M1), continue to the post-founding gateway.
+  // Once the minutes are signed (M1), continue to the milestone page.
   onNext: () => void;
   onBack: () => void;
 }
@@ -149,7 +149,7 @@ export function StepFoundingMeeting({
           generateMarkdown={() => buildFoundingMinutesMarkdown(state)}
           onBack={onBack}
           onNext={onNext}
-          nextLabel="What's next →"
+          nextLabel="Continue →"
           nextRequiresSigned={true}
           lockedHint="The Founding Meeting Minutes are now locked and cannot be edited."
         />

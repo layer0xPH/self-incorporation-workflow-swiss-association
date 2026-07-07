@@ -7,6 +7,9 @@ interface Props {
   // Route into the multisig setup step (step 6). The caller also marks Stage 2
   // started so document generation can begin.
   onSetupMultisig: () => void;
+  // Report the no-treasury (ShieldCo) choice up so the capability diagram can
+  // switch to its enriched "deliberately minimal" mode. true = no treasury.
+  onNoTreasuryChange?: (noTreasury: boolean) => void;
   // Return to the founding meeting step.
   onBack: () => void;
 }
@@ -55,7 +58,12 @@ function ChoiceButtons({
 //   • treasury + multisig   → the one built mechanism → multisig setup (step 6)
 //   • treasury, no multisig → intent captured, mechanism pending (not complete,
 //                             not incomplete — the only built rail is the multisig)
-export function TreasuryGateway({ state, onSetupMultisig, onBack }: Props) {
+export function TreasuryGateway({
+  state,
+  onSetupMultisig,
+  onNoTreasuryChange,
+  onBack,
+}: Props) {
   const [treasury, setTreasury] = useState<Choice>(null);
   const [multisig, setMultisig] = useState<Choice>(null);
 
@@ -111,10 +119,14 @@ export function TreasuryGateway({ state, onSetupMultisig, onBack }: Props) {
               </p>
               <ChoiceButtons
                 value={treasury}
-                onYes={() => setTreasury("yes")}
+                onYes={() => {
+                  setTreasury("yes");
+                  onNoTreasuryChange?.(false);
+                }}
                 onNo={() => {
                   setTreasury("no");
                   setMultisig(null);
+                  onNoTreasuryChange?.(true);
                 }}
               />
             </div>
