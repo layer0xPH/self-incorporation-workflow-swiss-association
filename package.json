@@ -1,6 +1,6 @@
 {
   "name": "self-incorporation-workflow-swiss-association",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "license": "AGPL-3.0-only",
   "files": [
     "/dist"
