@@ -34,7 +34,12 @@ export function StepIncorporationSigning({
 
   const members = state.members;
   const signedCount = members.filter((m) => m.incorporationSignedAt).length;
-  const incorporated = !!state.incorporationCompletedAt;
+  const completedAt = state.incorporationCompletedAt;
+  const incorporated = !!completedAt;
+  // Members with no wallet can never sign, so incorporation cannot complete
+  // until every one of them has an address. Surface this instead of leaving
+  // them as silent "pending" rows.
+  const unaddressed = members.filter((m) => !m.ethereumAddress);
 
   const myMember = myAddress
     ? members.find(
@@ -52,11 +57,10 @@ export function StepIncorporationSigning({
   }
 
   let actionArea: ReactNode;
-  if (incorporated) {
+  if (completedAt) {
     actionArea = (
       <p style={{ fontWeight: 600, color: "#16a34a" }}>
-        Entity incorporated on{" "}
-        {new Date(state.incorporationCompletedAt as string).toLocaleString()}
+        Entity incorporated on {new Date(completedAt).toLocaleString()}
       </p>
     );
   } else if (!myAddress) {
@@ -107,6 +111,18 @@ export function StepIncorporationSigning({
         <p className="text-sm text-slate-600">
           {signedCount} of {members.length} founding members have signed.
         </p>
+        {!incorporated && unaddressed.length > 0 && (
+          <div
+            className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800"
+            role="status"
+          >
+            {unaddressed.length === 1
+              ? `${unaddressed[0].name} has no wallet address set and cannot sign.`
+              : `${unaddressed.length} founding members have no wallet address set and cannot sign.`}{" "}
+            Incorporation can only complete once every member has an address —
+            set them in the Member Registry step.
+          </div>
+        )}
         <ul style={{ listStyle: "none", padding: 0, margin: "1rem 0" }}>
           {members.map((m) => {
             const isMe =
