@@ -12,6 +12,7 @@ import { StepAssociationDetails } from "./components/StepAssociationDetails.js";
 import { StepMemberRegistry } from "./components/StepMemberRegistry.js";
 import { StepBoardSetup } from "./components/StepBoardSetup.js";
 import { StepFoundingMeeting } from "./components/StepFoundingMeeting.js";
+import { StepIncorporationSigning } from "./components/StepIncorporationSigning.js";
 import { TreasuryGateway } from "./components/TreasuryGateway.js";
 import { MilestonePage } from "./components/MilestonePage.js";
 import { StepFinalArchive } from "./components/StepFinalArchive.js";
@@ -23,7 +24,7 @@ import { StepRegulationGA } from "./components/StepRegulationGA.js";
 import { StepDissolutionDetails } from "./components/StepDissolutionDetails.js";
 import { StepDissolutionResolution } from "./components/StepDissolutionResolution.js";
 import type { StageProgress } from "./components/ProgressSidebar.js";
-import { isStepLocked } from "./components/stages.js";
+import { isStepLocked, SIGNING_STEP } from "./components/stages.js";
 
 export default function Editor() {
   const [document, dispatch] = useSelectedSwissAssociationDocument();
@@ -46,6 +47,9 @@ export default function Editor() {
   const MILESTONE_STEP = -3;
   // Executed-documents archive — reachable from any step and the milestone page.
   const ARCHIVE_STEP = -4;
+  // Incorporation signing roll-call (SIGNING_STEP, imported from stages.ts) is
+  // reached from the founding meeting step (case 7) once the minutes are
+  // signed, before the M1 milestone screen.
 
   // Open the archive, remembering where to return (unless already there).
   function openArchive() {
@@ -75,6 +79,7 @@ export default function Editor() {
     ),
     dissolutionSigned: state.dissolutionResolutionDocument?.isSigned === true,
     hasMultisig: !!state.multisig,
+    incorporationSigned: !!state.incorporationCompletedAt,
   };
 
   // All steps are navigable; genuinely-locked steps render as read-only
@@ -166,8 +171,17 @@ export default function Editor() {
           <StepFoundingMeeting
             state={state}
             dispatch={safeDispatch}
-            onNext={() => setCurrentStep(MILESTONE_STEP)}
+            onNext={() => setCurrentStep(SIGNING_STEP)}
             onBack={() => setCurrentStep(5)}
+          />
+        );
+      case SIGNING_STEP:
+        return (
+          <StepIncorporationSigning
+            state={state}
+            dispatch={safeDispatch}
+            onBack={() => setCurrentStep(7)}
+            onContinue={() => setCurrentStep(MILESTONE_STEP)}
           />
         );
       case MILESTONE_STEP:

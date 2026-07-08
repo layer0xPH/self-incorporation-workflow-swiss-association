@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { STAGES, isStepLocked } from "./stages.js";
+import { STAGES, SIGNING_STEP, isStepLocked } from "./stages.js";
 import type { StageDef } from "./stages.js";
 
 // Four-state color system, shared by stage cards and step rows:
@@ -22,6 +22,7 @@ export interface StageProgress {
   regGaSigned: boolean;
   meetingRolesDone: boolean;
   minutesSigned: boolean;
+  incorporationSigned: boolean;
   multisigConfigured: boolean;
   mpaSigned: boolean;
   dissolutionDetailsDone: boolean;
@@ -36,6 +37,7 @@ export interface StageProgress {
 // state yet; it stays not-done until its templates are wired in.
 function isStepDone(step: number, p: StageProgress): boolean {
   const constituted = p.aoaSigned && p.minutesSigned;
+  if (step === SIGNING_STEP) return p.incorporationSigned;
   switch (step) {
     case 1:
       return p.detailsDone;
@@ -259,7 +261,13 @@ function StepRow({
       <span
         className={`w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-semibold flex-shrink-0 ${ROW_CIRCLE[status]}`}
       >
-        {status === "done" ? <CheckIcon size={9} /> : number}
+        {status === "done" ? (
+          <CheckIcon size={9} />
+        ) : number < 0 ? (
+          <span aria-hidden="true">✍</span>
+        ) : (
+          number
+        )}
       </span>
       <span className={`text-[11px] ${ROW_LABEL[status]}`}>{label}</span>
     </button>

@@ -7,6 +7,12 @@ export interface StageStep {
   label: string;
 }
 
+// The incorporation-signing roll-call is a dedicated screen (not a numbered
+// workflow step). Its selector matches the `SIGNING_STEP` constant in editor.tsx
+// so a sidebar click routes to the same screen. Kept out-of-band (negative) so
+// it never collides with the numbered steps.
+export const SIGNING_STEP = -5;
+
 export interface StageDef {
   number: number;
   name: string;
@@ -49,6 +55,7 @@ export const STAGES: StageDef[] = [
       { number: 4, label: "Review & Sign AoA" },
       { number: 5, label: "Review & Sign Reg GA" },
       { number: 7, label: "Founding Meeting & Minutes" },
+      { number: SIGNING_STEP, label: "Incorporation Signing" },
     ],
   },
   {
@@ -136,6 +143,7 @@ export interface StepGate {
 //   • Welcome + data entry (0–3) and Dissolution (≥10) are always reachable.
 export function isStepLocked(step: number, g: StepGate): boolean {
   if (step >= DISSOLUTION_FIRST_STEP) return false;
+  if (step === SIGNING_STEP) return !g.minutesSigned;
   if (OPTIONAL_BRANCH_STEPS.has(step)) return !g.minutesSigned;
   if (step === 5) return !g.aoaSigned;
   if (step === 7) return !g.aoaSigned || !g.regGaSigned;

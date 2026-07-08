@@ -8,12 +8,18 @@ import type {
 import type { DocumentDispatch } from "@powerhousedao/reactor-browser";
 import type { SwissAssociationAction } from "document-models/swiss-association";
 import {
+  actions,
   addMember,
   updateMember,
   removeMember,
 } from "document-models/swiss-association";
 import { FormField } from "./FormField.js";
 import { SectionCard } from "./SectionCard.js";
+
+function shortAddr(a: string | null | undefined): string {
+  if (!a) return "no wallet set";
+  return `${a.slice(0, 6)}…${a.slice(-4)}`;
+}
 
 interface Props {
   state: SwissAssociationState;
@@ -29,6 +35,7 @@ type MemberForm = {
   nationalityOrCountry: string;
   residenceOrCity: string;
   representative: string;
+  ethereumAddress: string;
 };
 
 function emptyForm(): MemberForm {
@@ -39,6 +46,7 @@ function emptyForm(): MemberForm {
     nationalityOrCountry: "",
     residenceOrCity: "",
     representative: "",
+    ethereumAddress: "",
   };
 }
 
@@ -73,6 +81,14 @@ function MemberCard({
               Rep: {member.representative}
             </p>
           )}
+          <p
+            className={`text-xs mt-0.5 font-mono ${
+              member.ethereumAddress ? "text-slate-500" : "text-slate-300"
+            }`}
+            title={member.ethereumAddress ?? undefined}
+          >
+            {shortAddr(member.ethereumAddress)}
+          </p>
           <span
             className={`inline-block mt-1.5 px-2 py-0.5 rounded text-xs font-medium ${
               member.type === "NATURAL_PERSON"
@@ -217,6 +233,21 @@ function MemberFormModal({
               />
             </FormField>
           )}
+
+          <FormField
+            label="Ethereum address (wallet)"
+            hint="Used to sign for incorporation with this member's own wallet"
+          >
+            <input
+              type="text"
+              value={form.ethereumAddress}
+              onChange={(e) =>
+                setForm({ ...form, ethereumAddress: e.target.value.trim() })
+              }
+              placeholder="0x…"
+              className="sw-input"
+            />
+          </FormField>
         </div>
         <div className="px-6 pb-6 flex justify-end gap-3">
           <button
@@ -251,6 +282,7 @@ export function StepMemberRegistry({ state, dispatch, onNext, onBack }: Props) {
         nationalityOrCountry: form.nationalityOrCountry,
         residenceOrCity: form.residenceOrCity,
         representative: form.representative || undefined,
+        ethereumAddress: form.ethereumAddress || undefined,
       }),
     );
     setShowForm(false);
@@ -267,6 +299,14 @@ export function StepMemberRegistry({ state, dispatch, onNext, onBack }: Props) {
         representative: form.representative || undefined,
       }),
     );
+    if (form.ethereumAddress) {
+      dispatch(
+        actions.setMemberEthereumAddress({
+          id: form.id,
+          ethereumAddress: form.ethereumAddress,
+        }),
+      );
+    }
     setEditingMember(null);
   }
 
@@ -365,6 +405,7 @@ export function StepMemberRegistry({ state, dispatch, onNext, onBack }: Props) {
                   nationalityOrCountry: member.nationalityOrCountry,
                   residenceOrCity: member.residenceOrCity,
                   representative: member.representative ?? "",
+                  ethereumAddress: member.ethereumAddress ?? "",
                 })
               }
               onRemove={() => handleRemove(member.id)}
