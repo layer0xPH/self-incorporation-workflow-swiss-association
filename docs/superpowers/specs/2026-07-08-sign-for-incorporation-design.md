@@ -210,5 +210,68 @@ hand-written `src/` reducers on this project:
 
 - No phase-gating (e.g. requiring AoA/founding minutes signed first) — not requested.
 - No explicit `IncorporationStatus` enum — the timestamp suffices.
-- No editor/UI work — this spec covers the document model only.
 - No duplicate-address enforcement on `ADD_MEMBER` (only on the dedicated set op).
+- No auth/login work — Renown/wallet login is part of the generic Connect
+  interface (see §10).
+
+## 10. Editor / UI
+
+The `swiss-association` editor is a step-based wizard (`editors/swiss-association/`).
+This feature adds address capture, a signing roll-call step, and wiring. It does
+**not** add any login/auth UI — the logged-in identity comes from Connect.
+
+### 10.1 Identity in the UI (how it works)
+
+- The logged-in user's Ethereum address is read via `useUser()?.address`
+  (equivalently `useRenownAuth().address`) from `@powerhousedao/reactor-browser`.
+  This is the Renown/`did:pkh` identity provided by the generic Connect shell.
+- **The editor does not sign manually.** Dispatch stays plain:
+  `dispatch(actions.signForIncorporation({ signedAt: new Date().toISOString() }))`.
+  Connect's reactor client is configured with the logged-in user's signer and
+  automatically attaches `action.context.signer.user.address` — the exact field
+  the reducer reads. **This runtime behaviour is the §2 open risk**; the UI and
+  the reducer share the same assumption and are both validated by the runtime
+  spike (design §2 / plan Task 8). `signedAt` is UI-generated (as with the
+  existing `START_STAGE_2` dispatch), which is fine — the reducer is still pure
+  because it consumes the value from input.
+
+### 10.2 Address capture — `StepMemberRegistry.tsx`
+
+Add an "Ethereum address" field to the member add/edit form. New members pass it
+through the extended `ADD_MEMBER`; edits to an existing member dispatch
+`SET_MEMBER_ETHEREUM_ADDRESS`. The member list shows each address truncated
+(`0x1234…abcd`) with a "no wallet set" marker when absent (such a member can
+never complete incorporation).
+
+### 10.3 New signing step — `StepIncorporationSigning.tsx`
+
+A dedicated numbered wizard step placed **after the Founding Meeting step and
+before the M1 milestone**. Behaviour is adjusted to the logged-in user:
+
+- Reads `useUser()?.address`, normalizes to lowercase, finds the matching
+  founding member.
+- **Roster:** every founding member with a ✓ signed (+ timestamp) or ⏳ pending
+  badge; the logged-in user's own row is highlighted ("This is you").
+- **Progress line:** "N of M founding members have signed."
+- **Single state-dependent primary action:**
+
+| Logged-in user's situation | UI |
+|---|---|
+| Address matches an unsigned member, not yet incorporated | "Sign for Incorporation" button enabled |
+| Address matches a member who already signed | Button hidden; "✓ You signed on {date}" |
+| Address matches no founding member | Button disabled; "Your wallet isn't among the founding members" |
+| Not logged in / no address | Button disabled; "Connect your wallet to sign" |
+| All members signed | Button gone; "Entity incorporated on {incorporationCompletedAt}" banner |
+
+The button dispatches `signForIncorporation({ signedAt })` and relies on the
+reducer for all enforcement — the UI's disabled states are guidance, not the
+security boundary.
+
+### 10.4 Wiring
+
+- Register the step in `editor.tsx` (new `case` in `renderStep`, new step index
+  after the Founding Meeting) and thread the `onNext`/`onBack` navigation.
+- Add `incorporationSigned: !!state.incorporationCompletedAt` to `stageProgress`
+  and surface it in `ProgressSidebar` / `stages.ts` following the existing
+  pattern (including `isStepLocked` gating: the step unlocks once the founding
+  meeting is done).

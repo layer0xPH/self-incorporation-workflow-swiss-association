@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add a strict, signer-verified `SIGN_FOR_INCORPORATION` operation so each founding member signs incorporation with their own wallet, and the entity becomes incorporated only once every founding member has signed.
+**Goal:** Add a strict, signer-verified `SIGN_FOR_INCORPORATION` operation so each founding member signs incorporation with their own wallet — and surface it in the editor as a signing roll-call adjusted to the logged-in user — so the entity becomes incorporated only once every founding member has signed.
 
 **Architecture:** The `swiss-association` v1 document model gains an `ethereumAddress` and an `incorporationSignedAt` field on each `AssociationMember`, a new `SET_MEMBER_ETHEREUM_ADDRESS` operation (members module), and a new `incorporation` module holding `SIGN_FOR_INCORPORATION`. The signer's identity is read from `action.context.signer.user.address` (never from input); when the last member signs, the reducer sets the existing `incorporationCompletedAt` timestamp.
 
@@ -41,6 +41,14 @@ Work happens on branch `feat/sign-for-incorporation` (already created).
 - **Create** `document-models/swiss-association/v1/tests/incorporation.test.ts` — signer helper, scenario test, error branches, `MemberAlreadySignedError`.
 - **Modify** `document-models/swiss-association/v1/tests/members.test.ts` — `SET_MEMBER_ETHEREUM_ADDRESS` tests + `ADD_MEMBER` with address.
 - **Auto-generated (do not hand-edit):** everything under `document-models/swiss-association/v1/gen/`.
+
+Editor files (Tasks 7–9) live under `editors/swiss-association/` and are **not**
+touched by document-model codegen — edit them normally, no MCP, no clobber risk:
+
+- **Modify** `editors/swiss-association/components/StepMemberRegistry.tsx` — Ethereum address field + list display.
+- **Create** `editors/swiss-association/components/StepIncorporationSigning.tsx` — the signing roll-call step.
+- **Modify** `editors/swiss-association/editor.tsx` — register the new step + navigation.
+- **Modify** `editors/swiss-association/components/stages.ts` and `ProgressSidebar.tsx` — progress + gating for the new step.
 
 ---
 
@@ -765,12 +773,295 @@ git commit -m "test: restore reducer coverage to >=95%"
 
 ---
 
-## Task 7: Final review commit
+## Task 7: Editor — capture Ethereum addresses in the member registry
+
+**Files:**
+- Modify: `editors/swiss-association/components/StepMemberRegistry.tsx`
+
+Editor files are plain React under `editors/` — edit directly, no MCP, no codegen. Read the whole file first to match its existing form-state and `FormField` patterns.
+
+- [ ] **Step 1: Add an address field to the member form**
+
+The form uses `MemberForm` state and `FormField` components, dispatching `addMember` / `updateMember`. Add an `ethereumAddress` string to the form state (default `""`), and render a field after the existing name/nationality fields:
+
+```tsx
+<FormField label="Ethereum address (wallet)">
+  <input
+    className="sw-input"
+    placeholder="0x…"
+    value={form.ethereumAddress}
+    onChange={(e) =>
+      setForm({ ...form, ethereumAddress: e.target.value.trim() })
+    }
+  />
+</FormField>
+```
+
+- [ ] **Step 2: Send the address on create and edit**
+
+In the create branch, include `ethereumAddress` in the `addMember({ ... })` input (omit or pass `undefined` when the string is empty). In the edit branch, after the existing `updateMember(...)` dispatch, dispatch the dedicated address op when the value changed and is non-empty:
+
+```tsx
+if (form.ethereumAddress) {
+  dispatch(
+    actions.setMemberEthereumAddress({
+      id: form.id,
+      ethereumAddress: form.ethereumAddress,
+    }),
+  );
+}
+```
+
+Import `actions` from `document-models/swiss-association` if not already imported (the file currently imports the named creators `addMember`, `updateMember`; either add `setMemberEthereumAddress` to that import or switch to the `actions` barrel — match the file's existing style).
+
+- [ ] **Step 3: Show the address in the member list**
+
+Where `state.members.map((member) => ...)` renders each row, add a truncated address (or a "no wallet set" marker). Add this helper near the top of the file:
+
+```tsx
+function shortAddr(a: string | null | undefined): string {
+  if (!a) return "no wallet set";
+  return `${a.slice(0, 6)}…${a.slice(-4)}`;
+}
+```
+
+Render `{shortAddr(member.ethereumAddress)}` in the row, styled muted when absent.
+
+- [ ] **Step 4: Typecheck**
+
+Run: `npm run tsc`
+Expected: PASS.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add editors/swiss-association/components/StepMemberRegistry.tsx
+git commit -m "feat(editor): capture and display member ethereum addresses"
+```
+
+---
+
+## Task 8: Editor — `StepIncorporationSigning` roll-call component
+
+**Files:**
+- Create: `editors/swiss-association/components/StepIncorporationSigning.tsx`
+
+- [ ] **Step 1: Read a sibling step for the exact Props/dispatch type**
+
+Open `editors/swiss-association/components/StepFoundingMeeting.tsx` and copy its `Props`/`dispatch` typing convention (state + dispatch + `onNext`/`onBack`). Use the identical dispatch type in the new component so `dispatch(actions.signForIncorporation(...))` typechecks.
+
+- [ ] **Step 2: Create the component**
+
+```tsx
+import { actions } from "document-models/swiss-association";
+import type { SwissAssociationState } from "document-models/swiss-association";
+import { useUser } from "@powerhousedao/reactor-browser";
+import { SectionCard } from "./SectionCard.js";
+
+// Mirror the dispatch type used by sibling steps (see StepFoundingMeeting.tsx).
+type Props = {
+  state: SwissAssociationState;
+  dispatch: (action: ReturnType<typeof actions.signForIncorporation>) => void;
+  onBack: () => void;
+  onContinue: () => void;
+};
+
+function shortAddr(a: string | null | undefined): string {
+  if (!a) return "—";
+  return `${a.slice(0, 6)}…${a.slice(-4)}`;
+}
+
+export function StepIncorporationSigning({
+  state,
+  dispatch,
+  onBack,
+  onContinue,
+}: Props) {
+  const user = useUser();
+  const myAddress = user?.address?.toLowerCase();
+
+  const members = state.members;
+  const signedCount = members.filter((m) => m.incorporationSignedAt).length;
+  const incorporated = !!state.incorporationCompletedAt;
+
+  const myMember = myAddress
+    ? members.find(
+        (m) => m.ethereumAddress && m.ethereumAddress.toLowerCase() === myAddress,
+      )
+    : undefined;
+
+  const canSign = !!myMember && !myMember.incorporationSignedAt && !incorporated;
+
+  function handleSign() {
+    dispatch(
+      actions.signForIncorporation({ signedAt: new Date().toISOString() }),
+    );
+  }
+
+  let actionArea: React.ReactNode;
+  if (incorporated) {
+    actionArea = (
+      <p style={{ fontWeight: 600, color: "#16a34a" }}>
+        Entity incorporated on{" "}
+        {new Date(state.incorporationCompletedAt as string).toLocaleString()}
+      </p>
+    );
+  } else if (!myAddress) {
+    actionArea = (
+      <button className="sw-btn-primary" disabled>
+        Connect your wallet to sign
+      </button>
+    );
+  } else if (!myMember) {
+    actionArea = (
+      <button className="sw-btn-primary" disabled title={myAddress}>
+        Your wallet isn't among the founding members
+      </button>
+    );
+  } else if (myMember.incorporationSignedAt) {
+    actionArea = (
+      <p style={{ fontWeight: 600, color: "#16a34a" }}>
+        ✓ You signed on{" "}
+        {new Date(myMember.incorporationSignedAt).toLocaleString()}
+      </p>
+    );
+  } else {
+    actionArea = (
+      <button className="sw-btn-primary" onClick={handleSign} disabled={!canSign}>
+        Sign for Incorporation
+      </button>
+    );
+  }
+
+  return (
+    <SectionCard title="Incorporation Signing">
+      <p>
+        {signedCount} of {members.length} founding members have signed.
+      </p>
+      <ul style={{ listStyle: "none", padding: 0, margin: "1rem 0" }}>
+        {members.map((m) => {
+          const isMe =
+            !!myAddress &&
+            !!m.ethereumAddress &&
+            m.ethereumAddress.toLowerCase() === myAddress;
+          return (
+            <li
+              key={m.id}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                padding: "0.5rem 0.75rem",
+                borderRadius: "0.5rem",
+                background: isMe ? "#fef2f2" : "transparent",
+              }}
+            >
+              <span>
+                {m.name}{" "}
+                <span style={{ color: "#94a3b8" }}>
+                  {shortAddr(m.ethereumAddress)}
+                </span>
+                {isMe ? <strong> — This is you</strong> : null}
+              </span>
+              <span>
+                {m.incorporationSignedAt
+                  ? `✓ signed ${new Date(m.incorporationSignedAt).toLocaleDateString()}`
+                  : "⏳ pending"}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+      <div style={{ margin: "1rem 0" }}>{actionArea}</div>
+      <div style={{ display: "flex", gap: "0.75rem" }}>
+        <button className="sw-btn-secondary" onClick={onBack}>
+          Back
+        </button>
+        <button className="sw-btn-secondary" onClick={onContinue}>
+          Continue
+        </button>
+      </div>
+    </SectionCard>
+  );
+}
+```
+
+Verify the actual props of `SectionCard` (open `SectionCard.tsx`); if it uses a different prop than `title`, adjust. If `useUser()` does not expose `.address` in the installed types, use `useRenownAuth().address` instead (both are exported from `@powerhousedao/reactor-browser`).
+
+- [ ] **Step 3: Typecheck**
+
+Run: `npm run tsc`
+Expected: PASS.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add editors/swiss-association/components/StepIncorporationSigning.tsx
+git commit -m "feat(editor): incorporation signing roll-call component"
+```
+
+---
+
+## Task 9: Editor — wire the step into the wizard and sidebar
+
+**Files:**
+- Modify: `editors/swiss-association/editor.tsx`
+- Modify: `editors/swiss-association/components/stages.ts`
+- Modify: `editors/swiss-association/components/ProgressSidebar.tsx`
+
+- [ ] **Step 1: Register the step in `editor.tsx`**
+
+Add a dedicated screen constant alongside the existing negative-step constants (e.g. `const SIGNING_STEP = -5;`). Import the component:
+
+```tsx
+import { StepIncorporationSigning } from "./components/StepIncorporationSigning.js";
+```
+
+Route the Founding Meeting step through signing before the milestone. In `case 7:` change its `onNext` from `setCurrentStep(MILESTONE_STEP)` to `setCurrentStep(SIGNING_STEP)`, and add:
+
+```tsx
+      case SIGNING_STEP:
+        return (
+          <StepIncorporationSigning
+            state={state}
+            dispatch={safeDispatch}
+            onBack={() => setCurrentStep(7)}
+            onContinue={() => setCurrentStep(MILESTONE_STEP)}
+          />
+        );
+```
+
+- [ ] **Step 2: Add progress state**
+
+In the `stageProgress` object in `editor.tsx`, add:
+
+```tsx
+    incorporationSigned: !!state.incorporationCompletedAt,
+```
+
+- [ ] **Step 3: Surface it in the sidebar/stages**
+
+Open `stages.ts` and `ProgressSidebar.tsx`. Add `incorporationSigned: boolean` to the `StageProgress` type, and follow the existing pattern to show an "Incorporation Signing" entry/dot in the founding stage group. Match the surrounding code — do not restructure the sidebar.
+
+- [ ] **Step 4: Typecheck and lint**
+
+Run: `npm run tsc && npm run lint:fix`
+Expected: PASS with no errors (the new `StageProgress` field must be set everywhere the type is constructed — the compiler will point out any miss).
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add editors/swiss-association
+git commit -m "feat(editor): wire incorporation signing step into the wizard"
+```
+
+---
+
+## Task 10: Final review commit
 
 - [ ] **Step 1: Confirm the working tree contains only intended changes**
 
 Run: `git status` and `git diff --stat main`
-Expected: changes only under `document-models/swiss-association/**`, `docs/superpowers/**`, and (if it was already present) `package-lock.json` untouched by these tasks.
+Expected: changes only under `document-models/swiss-association/**`, `editors/swiss-association/**`, `docs/superpowers/**`, and (if it was already present) `package-lock.json` untouched by these tasks.
 
 - [ ] **Step 2: Push the branch (only if the user asks)**
 
@@ -778,9 +1069,9 @@ Do not push unless the user requests it.
 
 ---
 
-## Task 8: Runtime signer-persistence verification (MANUAL — gating before production use)
+## Task 11: Runtime signer-persistence verification (MANUAL — gating before production use)
 
-Task 0 proved in-process propagation; this proves the reactor persists `context.signer` across a real signed dispatch so replay stays deterministic.
+Task 0 proved in-process propagation; this proves the reactor persists `context.signer` across a real signed dispatch so replay stays deterministic. **This also gates the editor (Tasks 7–9):** the "Sign for Incorporation" button relies on Connect auto-attaching the signer to the dispatched action. If this fails, the UI cannot work as designed either.
 
 - [ ] **Step 1:** In Vetra Studio / Connect, create a `swiss-association` document, add ≥2 founding members with their real wallet addresses.
 - [ ] **Step 2:** Sign in with a wallet matching one member and dispatch `SIGN_FOR_INCORPORATION`.
@@ -792,6 +1083,6 @@ Task 0 proved in-process propagation; this proves the reactor persists `context.
 
 ## Self-Review
 
-- **Spec coverage:** §2 identity model → Tasks 0, 4, 8. §3 state fields → Task 1. §4.1 ADD_MEMBER → Task 2. §4.2 SET_MEMBER_ETHEREUM_ADDRESS → Task 3. §4.3 SIGN_FOR_INCORPORATION → Task 4. §5 errors → Tasks 3, 4 (defined) + 5 (tested). §6 testing → Tasks 5, 6. §7 sequencing → Mechanism & Safety + phased tasks. §8 assumptions → Task 0/8 validate the one open risk. §9 out-of-scope respected (no editor, no status enum, no phase gating, no ADD_MEMBER duplicate guard).
-- **Type consistency:** `signForIncorporationOperation`, `swissAssociationIncorporationOperations`, `SwissAssociationIncorporationOperations`, `setMemberEthereumAddress`, `SetMemberEthereumAddressInput`, error names, and field names (`ethereumAddress`, `incorporationSignedAt`, `incorporationCompletedAt`) are used identically across tasks. Task 6 flags the generated module-type name as the one thing to confirm against codegen.
-- **Placeholder scan:** no TBD/TODO; all code and commands are concrete.
+- **Spec coverage:** §2 identity model → Tasks 0, 4, 11. §3 state fields → Task 1. §4.1 ADD_MEMBER → Task 2. §4.2 SET_MEMBER_ETHEREUM_ADDRESS → Task 3. §4.3 SIGN_FOR_INCORPORATION → Task 4. §5 errors → Tasks 3, 4 (defined) + 5 (tested). §6 testing → Tasks 5, 6. §7 sequencing → Mechanism & Safety + phased tasks. §8 assumptions → Tasks 0/11 validate the one open risk. §10 editor/UI → §10.2 → Task 7, §10.3 → Task 8, §10.1 + §10.4 → Task 9 (identity via `useUser`, plain dispatch, wiring). §9 out-of-scope respected (no status enum, no phase gating, no ADD_MEMBER duplicate guard, no auth work).
+- **Type consistency:** `signForIncorporationOperation`, `swissAssociationIncorporationOperations`, `SwissAssociationIncorporationOperations`, `setMemberEthereumAddress`, `SetMemberEthereumAddressInput`, error names, and field names (`ethereumAddress`, `incorporationSignedAt`, `incorporationCompletedAt`, `incorporationSigned`) are used identically across model and editor tasks. Task 6 flags the generated module-type name, Task 8 flags `useUser().address` vs `useRenownAuth().address` and the `SectionCard` prop — the two things to confirm against installed types.
+- **Placeholder scan:** no TBD/TODO. Editor tasks (7–9) intentionally direct the engineer to read `StepMemberRegistry.tsx`, `StepFoundingMeeting.tsx`, `stages.ts`, `ProgressSidebar.tsx`, and `SectionCard.tsx` first, because their existing internal structure wasn't fully captured during planning; the exact new code (fields, component, cases, flags) is spelled out.
