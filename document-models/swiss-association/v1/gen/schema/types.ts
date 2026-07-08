@@ -95,6 +95,7 @@ export type AddContributorAgreementInput = {
 };
 
 export type AddMemberInput = {
+  ethereumAddress?: InputMaybe<Scalars["EthereumAddress"]["input"]>;
   id: Scalars["OID"]["input"];
   name: Scalars["String"]["input"];
   nationalityOrCountry: Scalars["String"]["input"];
@@ -112,7 +113,9 @@ export type AdvancePhaseInput = {
 };
 
 export type AssociationMember = {
+  ethereumAddress: Maybe<Scalars["EthereumAddress"]["output"]>;
   id: Scalars["OID"]["output"];
+  incorporationSignedAt: Maybe<Scalars["DateTime"]["output"]>;
   name: Scalars["String"]["output"];
   nationalityOrCountry: Scalars["String"]["output"];
   representative: Maybe<Scalars["String"]["output"]>;
@@ -265,6 +268,11 @@ export type SetMeetingRolesInput = {
   secretaryRole: Scalars["String"]["input"];
 };
 
+export type SetMemberEthereumAddressInput = {
+  ethereumAddress: Scalars["EthereumAddress"]["input"];
+  id: Scalars["OID"]["input"];
+};
+
 export type SetMultisigConfigInput = {
   address: Scalars["String"]["input"];
   availabilityThreshold?: InputMaybe<Scalars["String"]["input"]>;
@@ -285,6 +293,10 @@ export type SetPurposeInput = {
 export type SetStage2DocumentMarkdownInput = {
   documentType: Stage2DocumentType;
   markdown: Scalars["String"]["input"];
+};
+
+export type SignForIncorporationInput = {
+  signedAt: Scalars["DateTime"]["input"];
 };
 
 export type Stage2DocumentType =

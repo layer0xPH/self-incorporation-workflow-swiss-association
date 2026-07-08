@@ -24,6 +24,8 @@ export const swissAssociationBoardOperations: SwissAssociationBoardOperations =
         nationalityOrCountry: action.input.nationalityOrCountry,
         residenceOrCity: action.input.residenceOrCity,
         representative: action.input.representative || null,
+        ethereumAddress: null,
+        incorporationSignedAt: null,
       };
       state.boardMembers.push(boardMember);
       updatePersonalunionFlag(state);
@@ -67,6 +69,8 @@ export const swissAssociationBoardOperations: SwissAssociationBoardOperations =
         nationalityOrCountry: member.nationalityOrCountry,
         residenceOrCity: member.residenceOrCity,
         representative: member.representative || null,
+        ethereumAddress: null,
+        incorporationSignedAt: null,
       }));
       updatePersonalunionFlag(state);
     },

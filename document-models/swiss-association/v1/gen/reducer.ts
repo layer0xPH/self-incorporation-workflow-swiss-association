@@ -9,6 +9,7 @@ import { swissAssociationBoardOperations } from "../src/reducers/board.js";
 import { swissAssociationContributorsOperations } from "../src/reducers/contributors.js";
 import { swissAssociationDissolutionOperations } from "../src/reducers/dissolution.js";
 import { swissAssociationDocumentsOperations } from "../src/reducers/documents.js";
+import { swissAssociationIncorporationOperations } from "../src/reducers/incorporation.js";
 import { swissAssociationMembersOperations } from "../src/reducers/members.js";
 import { swissAssociationMultisigOperations } from "../src/reducers/multisig.js";
 import { swissAssociationWorkflowOperations } from "../src/reducers/workflow.js";
@@ -32,9 +33,11 @@ import {
   SetFiscalDetailsInputSchema,
   SetFoundingDateInputSchema,
   SetMeetingRolesInputSchema,
+  SetMemberEthereumAddressInputSchema,
   SetMultisigConfigInputSchema,
   SetPurposeInputSchema,
   SetStage2DocumentMarkdownInputSchema,
+  SignForIncorporationInputSchema,
   StartStage_2InputSchema,
   UpdateBoardMemberInputSchema,
   UpdateContributorAgreementInputSchema,
@@ -139,6 +142,18 @@ const stateReducer: StateReducer<SwissAssociationPHState> = (
       RemoveMemberInputSchema().parse(action.input);
 
       swissAssociationMembersOperations.removeMemberOperation(
+        (state as any)[action.scope],
+        action as any,
+        dispatch,
+      );
+
+      break;
+    }
+
+    case "SET_MEMBER_ETHEREUM_ADDRESS": {
+      SetMemberEthereumAddressInputSchema().parse(action.input);
+
+      swissAssociationMembersOperations.setMemberEthereumAddressOperation(
         (state as any)[action.scope],
         action as any,
         dispatch,
@@ -355,6 +370,18 @@ const stateReducer: StateReducer<SwissAssociationPHState> = (
       MarkContributorAgreementSignedInputSchema().parse(action.input);
 
       swissAssociationContributorsOperations.markContributorAgreementSignedOperation(
+        (state as any)[action.scope],
+        action as any,
+        dispatch,
+      );
+
+      break;
+    }
+
+    case "SIGN_FOR_INCORPORATION": {
+      SignForIncorporationInputSchema().parse(action.input);
+
+      swissAssociationIncorporationOperations.signForIncorporationOperation(
         (state as any)[action.scope],
         action as any,
         dispatch,

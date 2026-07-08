@@ -13,6 +13,7 @@ export * from "./document-model.js";
 export * from "./document-schema.js";
 export * from "./document-type.js";
 export * from "./documents/operations.js";
+export * from "./incorporation/operations.js";
 export * from "./members/operations.js";
 export * from "./multisig/operations.js";
 export {

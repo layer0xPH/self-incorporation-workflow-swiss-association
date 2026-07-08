@@ -16,7 +16,7 @@
           "initialValue": ""
         },
         "global": {
-          "schema": "enum PrimaryLanguage {\n  EN\n  DE\n}\n\nenum MemberType {\n  NATURAL_PERSON\n  LEGAL_ENTITY\n}\n\nenum PhaseStatus {\n  LOCKED\n  IN_PROGRESS\n  AWAITING_SIGNATURES\n  COMPLETE\n}\n\nenum Stage2DocumentType {\n  AOA\n  FOUNDING_MINUTES\n  MPA\n  REG_GA\n  DISSOLUTION_RESOLUTION\n}\n\nenum DissolutionResolutionForm {\n  PHYSICAL\n  VIRTUAL\n  WRITTEN\n}\n\ntype AssociationMember {\n  id: OID!\n  type: MemberType!\n  name: String!\n  nationalityOrCountry: String!\n  residenceOrCity: String!\n  representative: String\n}\n\ntype MultisigConfig {\n  platform: String\n  address: String\n  keysTotal: Int\n  decisionQuorum: Int\n  privateChannel: String\n  availabilityThreshold: String\n  internalPolicyLink: String\n  multisigDate: Date\n  emergencyProcedures: String\n}\n\ntype PhaseRecord {\n  id: OID!\n  phaseNumber: Int!\n  name: String!\n  status: PhaseStatus!\n  documentsGenerated: Boolean!\n  documentsSigned: Boolean!\n  completedDate: Date\n}\n\ntype GeneratedStage2Document {\n  markdown: String\n  isSigned: Boolean\n  signedAt: DateTime\n  isLocked: Boolean\n}\n\ntype Dissolution {\n  dissolutionDate: Date\n  resolutionForm: DissolutionResolutionForm\n  assetRecipient: String\n  executingPersons: String\n  remainingAssetsSummary: String\n}\n\nenum ContributorTermType {\n  FIXED_DATE\n  ON_SOW_COMPLETION\n  NOTICE\n}\n\ntype ContributorAgreement {\n  id: OID!\n  contractorIsEntity: Boolean!\n  termType: ContributorTermType!\n  contractorName: String\n  contractorNationality: String\n  contractorAddress: String\n  entityName: String\n  entityType: String\n  entityJurisdiction: String\n  role: String\n  contractDate: Date\n  workStartDate: Date\n  workEndDate: Date\n  terminationNoticePeriod: String\n  sowNumber: String\n  services: String\n  fteHours: String\n  compensation: String\n  denominationType: String\n  denominationCurrency: String\n  generatedDocument: GeneratedStage2Document\n}\n\ntype SwissAssociationState {\n  nameEn: String\n  nameDe: String\n  seatCity: String\n  seatCanton: String\n  registeredAddress: String\n  foundingDate: Date\n  fiscalYearEnd: String\n  membershipFee: String\n  primaryLanguage: PrimaryLanguage\n  purposeEn: String\n  purposeDe: String\n  members: [AssociationMember!]!\n  boardMembers: [AssociationMember!]\n  isPersonalunion: Boolean\n  chairName: String\n  chairRole: String\n  secretaryName: String\n  secretaryRole: String\n  meetingIsOnline: Boolean\n  meetingVenue: String\n  counselName: String\n  multisig: MultisigConfig\n  stage2Started: Boolean\n  aoaDocument: GeneratedStage2Document\n  foundingMinutesDocument: GeneratedStage2Document\n  mpaDocument: GeneratedStage2Document\n  regGaDocument: GeneratedStage2Document\n  dissolution: Dissolution\n  dissolutionResolutionDocument: GeneratedStage2Document\n  incorporationCompletedAt: DateTime\n  currentPhase: Int\n  phases: [PhaseRecord!]!\n  languageClauseNeedsUpdate: Boolean\n  belowRecommendedMemberCount: Boolean\n  registeredAddressConfirmed: Boolean\n  customNotes: [String!]!\n  contributorAgreements: [ContributorAgreement!]!\n}",
+          "schema": "enum PrimaryLanguage {\n  EN\n  DE\n}\n\nenum MemberType {\n  NATURAL_PERSON\n  LEGAL_ENTITY\n}\n\nenum PhaseStatus {\n  LOCKED\n  IN_PROGRESS\n  AWAITING_SIGNATURES\n  COMPLETE\n}\n\nenum Stage2DocumentType {\n  AOA\n  FOUNDING_MINUTES\n  MPA\n  REG_GA\n  DISSOLUTION_RESOLUTION\n}\n\nenum DissolutionResolutionForm {\n  PHYSICAL\n  VIRTUAL\n  WRITTEN\n}\n\ntype AssociationMember {\n  id: OID!\n  type: MemberType!\n  name: String!\n  nationalityOrCountry: String!\n  residenceOrCity: String!\n  representative: String\n  ethereumAddress: EthereumAddress\n  incorporationSignedAt: DateTime\n}\n\ntype MultisigConfig {\n  platform: String\n  address: String\n  keysTotal: Int\n  decisionQuorum: Int\n  privateChannel: String\n  availabilityThreshold: String\n  internalPolicyLink: String\n  multisigDate: Date\n  emergencyProcedures: String\n}\n\ntype PhaseRecord {\n  id: OID!\n  phaseNumber: Int!\n  name: String!\n  status: PhaseStatus!\n  documentsGenerated: Boolean!\n  documentsSigned: Boolean!\n  completedDate: Date\n}\n\ntype GeneratedStage2Document {\n  markdown: String\n  isSigned: Boolean\n  signedAt: DateTime\n  isLocked: Boolean\n}\n\ntype Dissolution {\n  dissolutionDate: Date\n  resolutionForm: DissolutionResolutionForm\n  assetRecipient: String\n  executingPersons: String\n  remainingAssetsSummary: String\n}\n\nenum ContributorTermType {\n  FIXED_DATE\n  ON_SOW_COMPLETION\n  NOTICE\n}\n\ntype ContributorAgreement {\n  id: OID!\n  contractorIsEntity: Boolean!\n  termType: ContributorTermType!\n  contractorName: String\n  contractorNationality: String\n  contractorAddress: String\n  entityName: String\n  entityType: String\n  entityJurisdiction: String\n  role: String\n  contractDate: Date\n  workStartDate: Date\n  workEndDate: Date\n  terminationNoticePeriod: String\n  sowNumber: String\n  services: String\n  fteHours: String\n  compensation: String\n  denominationType: String\n  denominationCurrency: String\n  generatedDocument: GeneratedStage2Document\n}\n\ntype SwissAssociationState {\n  nameEn: String\n  nameDe: String\n  seatCity: String\n  seatCanton: String\n  registeredAddress: String\n  foundingDate: Date\n  fiscalYearEnd: String\n  membershipFee: String\n  primaryLanguage: PrimaryLanguage\n  purposeEn: String\n  purposeDe: String\n  members: [AssociationMember!]!\n  boardMembers: [AssociationMember!]\n  isPersonalunion: Boolean\n  chairName: String\n  chairRole: String\n  secretaryName: String\n  secretaryRole: String\n  meetingIsOnline: Boolean\n  meetingVenue: String\n  counselName: String\n  multisig: MultisigConfig\n  stage2Started: Boolean\n  aoaDocument: GeneratedStage2Document\n  foundingMinutesDocument: GeneratedStage2Document\n  mpaDocument: GeneratedStage2Document\n  regGaDocument: GeneratedStage2Document\n  dissolution: Dissolution\n  dissolutionResolutionDocument: GeneratedStage2Document\n  incorporationCompletedAt: DateTime\n  currentPhase: Int\n  phases: [PhaseRecord!]!\n  languageClauseNeedsUpdate: Boolean\n  belowRecommendedMemberCount: Boolean\n  registeredAddressConfirmed: Boolean\n  customNotes: [String!]!\n  contributorAgreements: [ContributorAgreement!]!\n}",
           "examples": [],
           "initialValue": "{\"nameEn\": null, \"nameDe\": null, \"seatCity\": \"Zug\", \"seatCanton\": \"Canton Zug\", \"registeredAddress\": null, \"foundingDate\": null, \"fiscalYearEnd\": \"31 December\", \"membershipFee\": \"none\", \"primaryLanguage\": \"EN\", \"purposeEn\": null, \"purposeDe\": null, \"members\": [], \"boardMembers\": null, \"isPersonalunion\": null, \"chairName\": null, \"chairRole\": null, \"secretaryName\": null, \"secretaryRole\": null, \"meetingIsOnline\": null, \"meetingVenue\": null, \"counselName\": null, \"multisig\": null, \"stage2Started\": null, \"aoaDocument\": null, \"foundingMinutesDocument\": null, \"mpaDocument\": null, \"regGaDocument\": null, \"dissolution\": null, \"dissolutionResolutionDocument\": null, \"incorporationCompletedAt\": null, \"currentPhase\": 1, \"phases\": [{\"id\": \"phase-1\", \"phaseNumber\": 1, \"name\": \"Pre-Incorporation\", \"status\": \"IN_PROGRESS\", \"documentsGenerated\": false, \"documentsSigned\": false, \"completedDate\": null}, {\"id\": \"phase-2\", \"phaseNumber\": 2, \"name\": \"Founding Meeting\", \"status\": \"LOCKED\", \"documentsGenerated\": false, \"documentsSigned\": false, \"completedDate\": null}, {\"id\": \"phase-3\", \"phaseNumber\": 3, \"name\": \"Multisig Setup\", \"status\": \"LOCKED\", \"documentsGenerated\": false, \"documentsSigned\": false, \"completedDate\": null}], \"languageClauseNeedsUpdate\": true, \"belowRecommendedMemberCount\": null, \"registeredAddressConfirmed\": null, \"customNotes\": [], \"contributorAgreements\": []}"
         }
@@ -93,9 +93,9 @@
               "id": "op-add-member",
               "name": "ADD_MEMBER",
               "description": "Adds a founding member to the association",
-              "schema": "input AddMemberInput {\n  id: OID!\n  type: MemberType!\n  name: String!\n  nationalityOrCountry: String!\n  residenceOrCity: String!\n  representative: String\n}",
+              "schema": "input AddMemberInput {\n  id: OID!\n  type: MemberType!\n  name: String!\n  nationalityOrCountry: String!\n  residenceOrCity: String!\n  representative: String\n  ethereumAddress: EthereumAddress\n}",
               "template": "Adds a founding member to the association",
-              "reducer": "const member = {\n  id: action.input.id,\n  type: action.input.type,\n  name: action.input.name,\n  nationalityOrCountry: action.input.nationalityOrCountry,\n  residenceOrCity: action.input.residenceOrCity,\n  representative: action.input.representative || null,\n};\nstate.members.push(member);\nstate.belowRecommendedMemberCount = state.members.length < 3;\nupdatePersonalunionFlag(state);",
+              "reducer": "const member = {\n  id: action.input.id,\n  type: action.input.type,\n  name: action.input.name,\n  nationalityOrCountry: action.input.nationalityOrCountry,\n  residenceOrCity: action.input.residenceOrCity,\n  representative: action.input.representative || null,\n  ethereumAddress: action.input.ethereumAddress || null,\n  incorporationSignedAt: null,\n};\nstate.members.push(member);\nstate.belowRecommendedMemberCount = state.members.length < 3;\nupdatePersonalunionFlag(state);",
               "errors": [],
               "examples": [],
               "scope": "global"
@@ -137,6 +137,39 @@
               ],
               "examples": [],
               "scope": "global"
+            },
+            {
+              "id": "op-set-member-eth",
+              "name": "SET_MEMBER_ETHEREUM_ADDRESS",
+              "description": "Sets or updates a founding member's Ethereum wallet address",
+              "schema": "input SetMemberEthereumAddressInput {\n  id: OID!\n  ethereumAddress: EthereumAddress!\n}",
+              "template": "Sets or updates a founding member's Ethereum wallet address",
+              "reducer": "const idx = state.members.findIndex((m) => m.id === action.input.id);\nif (idx === -1)\n  throw new MemberNotFoundForAddressError(`Member ${action.input.id} not found`);\nconst member = state.members[idx];\nif (member.incorporationSignedAt)\n  throw new MemberAlreadySignedError(\n    `Member ${action.input.id} has already signed and cannot change address`,\n  );\nconst normalized = action.input.ethereumAddress.toLowerCase();\nconst clash = state.members.some(\n  (m) =>\n    m.id !== action.input.id &&\n    m.ethereumAddress &&\n    m.ethereumAddress.toLowerCase() === normalized,\n);\nif (clash)\n  throw new DuplicateEthereumAddressError(\n    `Ethereum address is already assigned to another member`,\n  );\nmember.ethereumAddress = action.input.ethereumAddress;",
+              "errors": [
+                {
+                  "id": "err-set-eth-not-found",
+                  "name": "MemberNotFoundForAddressError",
+                  "code": "MEMBER_NOT_FOUND_FOR_ADDRESS",
+                  "description": "The member to set an Ethereum address for was not found",
+                  "template": ""
+                },
+                {
+                  "id": "err-set-eth-duplicate",
+                  "name": "DuplicateEthereumAddressError",
+                  "code": "DUPLICATE_ETHEREUM_ADDRESS",
+                  "description": "The Ethereum address is already assigned to another member",
+                  "template": ""
+                },
+                {
+                  "id": "err-set-eth-already-signed",
+                  "name": "MemberAlreadySignedError",
+                  "code": "MEMBER_ALREADY_SIGNED",
+                  "description": "The member has already signed for incorporation and cannot change address",
+                  "template": ""
+                }
+              ],
+              "examples": [],
+              "scope": "global"
             }
           ]
         },
@@ -151,7 +184,7 @@
               "description": "Adds a board member",
               "schema": "input AddBoardMemberInput {\n  id: OID!\n  type: MemberType!\n  name: String!\n  nationalityOrCountry: String!\n  residenceOrCity: String!\n  representative: String\n}",
               "template": "Adds a board member",
-              "reducer": "if (!state.boardMembers) state.boardMembers = [];\nconst boardMember = {\n  id: action.input.id,\n  type: action.input.type,\n  name: action.input.name,\n  nationalityOrCountry: action.input.nationalityOrCountry,\n  residenceOrCity: action.input.residenceOrCity,\n  representative: action.input.representative || null,\n};\nstate.boardMembers.push(boardMember);\nupdatePersonalunionFlag(state);",
+              "reducer": "if (!state.boardMembers) state.boardMembers = [];\nconst boardMember = {\n  id: action.input.id,\n  type: action.input.type,\n  name: action.input.name,\n  nationalityOrCountry: action.input.nationalityOrCountry,\n  residenceOrCity: action.input.residenceOrCity,\n  representative: action.input.representative || null,\n  ethereumAddress: null,\n  incorporationSignedAt: null,\n};\nstate.boardMembers.push(boardMember);\nupdatePersonalunionFlag(state);",
               "errors": [],
               "examples": [],
               "scope": "global"
@@ -200,7 +233,7 @@
               "description": "Copies all founding members to the board (Personalunion)",
               "schema": "input CopyFoundingMembersToBoardInput {\n  confirm: Boolean!\n}",
               "template": "Copies all founding members to the board (Personalunion)",
-              "reducer": "state.boardMembers = state.members.map((member) => ({\n  id: member.id,\n  type: member.type,\n  name: member.name,\n  nationalityOrCountry: member.nationalityOrCountry,\n  residenceOrCity: member.residenceOrCity,\n  representative: member.representative || null,\n}));\nupdatePersonalunionFlag(state);",
+              "reducer": "state.boardMembers = state.members.map((member) => ({\n  id: member.id,\n  type: member.type,\n  name: member.name,\n  nationalityOrCountry: member.nationalityOrCountry,\n  residenceOrCity: member.residenceOrCity,\n  representative: member.representative || null,\n  ethereumAddress: null,\n  incorporationSignedAt: null,\n}));\nupdatePersonalunionFlag(state);",
               "errors": [],
               "examples": [],
               "scope": "global"
@@ -444,6 +477,60 @@
                   "name": "ContributorAgreementNotFoundError",
                   "code": "CONTRIBUTOR_AGREEMENT_NOT_FOUND",
                   "description": "The specified contributor agreement was not found",
+                  "template": ""
+                }
+              ],
+              "examples": [],
+              "scope": "global"
+            }
+          ]
+        },
+        {
+          "id": "mod-incorporation",
+          "name": "incorporation",
+          "description": "Operations for founding members to cryptographically sign for incorporation",
+          "operations": [
+            {
+              "id": "op-sign-for-incorporation",
+              "name": "SIGN_FOR_INCORPORATION",
+              "description": "A founding member signs for incorporation using their wallet identity; the entity is incorporated once every founding member has signed",
+              "schema": "input SignForIncorporationInput {\n  signedAt: DateTime!\n}",
+              "template": "A founding member signs for incorporation; incorporation completes when all have signed",
+              "reducer": "const signerAddress = action.context?.signer?.user.address;\nif (state.incorporationCompletedAt)\n  throw new AlreadyIncorporatedError(\"Entity is already incorporated\");\nif (!signerAddress)\n  throw new MissingSignerError(\"No signer address on the action\");\nif (state.members.length === 0)\n  throw new NoFoundingMembersError(\"No founding members to sign for\");\nconst normalized = signerAddress.toLowerCase();\nconst member = state.members.find(\n  (m) => m.ethereumAddress && m.ethereumAddress.toLowerCase() === normalized,\n);\nif (!member)\n  throw new SignerNotFoundingMemberError(\n    \"Signer address does not match any founding member\",\n  );\nif (member.incorporationSignedAt)\n  throw new AlreadySignedError(\"This founding member has already signed\");\nmember.incorporationSignedAt = action.input.signedAt;\nconst allSigned = state.members.every((m) => m.incorporationSignedAt);\nif (allSigned) {\n  state.incorporationCompletedAt = action.input.signedAt;\n}",
+              "errors": [
+                {
+                  "id": "err-sign-already-incorporated",
+                  "name": "AlreadyIncorporatedError",
+                  "code": "ALREADY_INCORPORATED",
+                  "description": "The entity is already incorporated",
+                  "template": ""
+                },
+                {
+                  "id": "err-sign-missing-signer",
+                  "name": "MissingSignerError",
+                  "code": "MISSING_SIGNER",
+                  "description": "The action carries no signer address",
+                  "template": ""
+                },
+                {
+                  "id": "err-sign-no-members",
+                  "name": "NoFoundingMembersError",
+                  "code": "NO_FOUNDING_MEMBERS",
+                  "description": "There are no founding members to sign for incorporation",
+                  "template": ""
+                },
+                {
+                  "id": "err-sign-not-member",
+                  "name": "SignerNotFoundingMemberError",
+                  "code": "SIGNER_NOT_FOUNDING_MEMBER",
+                  "description": "The signer address does not match any founding member's address",
+                  "template": ""
+                },
+                {
+                  "id": "err-sign-already-signed",
+                  "name": "AlreadySignedError",
+                  "code": "ALREADY_SIGNED",
+                  "description": "This founding member has already signed",
                   "template": ""
                 }
               ],

@@ -7,6 +7,7 @@ import type { SwissAssociationGlobalState } from "../types.js";
 import type {
   AddMemberAction,
   RemoveMemberAction,
+  SetMemberEthereumAddressAction,
   UpdateMemberAction,
 } from "./actions.js";
 
@@ -24,6 +25,11 @@ export interface SwissAssociationMembersOperations {
   removeMemberOperation: (
     state: SwissAssociationGlobalState,
     action: RemoveMemberAction,
+    dispatch?: SignalDispatch,
+  ) => void;
+  setMemberEthereumAddressOperation: (
+    state: SwissAssociationGlobalState,
+    action: SetMemberEthereumAddressAction,
     dispatch?: SignalDispatch,
   ) => void;
 }

@@ -1,5 +1,10 @@
 import type { SwissAssociationMembersOperations } from "document-models/swiss-association/v1";
-import { MemberNotFoundError } from "../../gen/members/error.js";
+import {
+  DuplicateEthereumAddressError,
+  MemberAlreadySignedError,
+  MemberNotFoundError,
+  MemberNotFoundForAddressError,
+} from "../../gen/members/error.js";
 import { updatePersonalunionFlag } from "./personalunion.js";
 
 export const swissAssociationMembersOperations: SwissAssociationMembersOperations =
@@ -12,6 +17,8 @@ export const swissAssociationMembersOperations: SwissAssociationMembersOperation
         nationalityOrCountry: action.input.nationalityOrCountry,
         residenceOrCity: action.input.residenceOrCity,
         representative: action.input.representative || null,
+        ethereumAddress: action.input.ethereumAddress || null,
+        incorporationSignedAt: null,
       };
       state.members.push(member);
       state.belowRecommendedMemberCount = state.members.length < 3;
@@ -42,5 +49,29 @@ export const swissAssociationMembersOperations: SwissAssociationMembersOperation
       state.members.splice(idx, 1);
       state.belowRecommendedMemberCount = state.members.length < 3;
       updatePersonalunionFlag(state);
+    },
+    setMemberEthereumAddressOperation(state, action) {
+      const idx = state.members.findIndex((m) => m.id === action.input.id);
+      if (idx === -1)
+        throw new MemberNotFoundForAddressError(
+          `Member ${action.input.id} not found`,
+        );
+      const member = state.members[idx];
+      if (member.incorporationSignedAt)
+        throw new MemberAlreadySignedError(
+          `Member ${action.input.id} has already signed and cannot change address`,
+        );
+      const normalized = action.input.ethereumAddress.toLowerCase();
+      const clash = state.members.some(
+        (m) =>
+          m.id !== action.input.id &&
+          m.ethereumAddress &&
+          m.ethereumAddress.toLowerCase() === normalized,
+      );
+      if (clash)
+        throw new DuplicateEthereumAddressError(
+          `Ethereum address is already assigned to another member`,
+        );
+      member.ethereumAddress = action.input.ethereumAddress;
     },
   };

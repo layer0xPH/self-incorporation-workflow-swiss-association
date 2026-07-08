@@ -9,6 +9,7 @@ import {
   swissAssociationContributorsActions,
   swissAssociationDissolutionActions,
   swissAssociationDocumentsActions,
+  swissAssociationIncorporationActions,
   swissAssociationMembersActions,
   swissAssociationMultisigActions,
   swissAssociationWorkflowActions,
@@ -26,4 +27,5 @@ export const actions = {
   ...swissAssociationWorkflowActions,
   ...swissAssociationDissolutionActions,
   ...swissAssociationContributorsActions,
+  ...swissAssociationIncorporationActions,
 };

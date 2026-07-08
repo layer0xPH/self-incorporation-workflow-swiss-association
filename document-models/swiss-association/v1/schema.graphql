@@ -57,6 +57,8 @@ type AssociationMember {
   nationalityOrCountry: String!
   residenceOrCity: String!
   representative: String
+  ethereumAddress: EthereumAddress
+  incorporationSignedAt: DateTime
 }
 
 type MultisigConfig {
@@ -203,6 +205,7 @@ input AddMemberInput {
   nationalityOrCountry: String!
   residenceOrCity: String!
   representative: String
+  ethereumAddress: EthereumAddress
 }
 
 input UpdateMemberInput {
@@ -216,6 +219,11 @@ input UpdateMemberInput {
 
 input RemoveMemberInput {
   id: OID!
+}
+
+input SetMemberEthereumAddressInput {
+  id: OID!
+  ethereumAddress: EthereumAddress!
 }
 
 # board
@@ -373,5 +381,11 @@ input SetContributorAgreementMarkdownInput {
 
 input MarkContributorAgreementSignedInput {
   id: OID!
+  signedAt: DateTime!
+}
+
+# incorporation
+
+input SignForIncorporationInput {
   signedAt: DateTime!
 }

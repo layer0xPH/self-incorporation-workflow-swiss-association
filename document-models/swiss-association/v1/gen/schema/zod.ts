@@ -31,9 +31,11 @@ import type {
   SetFiscalDetailsInput,
   SetFoundingDateInput,
   SetMeetingRolesInput,
+  SetMemberEthereumAddressInput,
   SetMultisigConfigInput,
   SetPurposeInput,
   SetStage2DocumentMarkdownInput,
+  SignForIncorporationInput,
   Stage2DocumentType,
   StartStage_2Input,
   SwissAssociationState,
@@ -131,6 +133,12 @@ export function AddMemberInputSchema(): z.ZodObject<
   Properties<AddMemberInput>
 > {
   return z.object({
+    ethereumAddress: z
+      .string()
+      .regex(/^0x[a-fA-F0-9]{40}$/, {
+        message: "Invalid Ethereum address format",
+      })
+      .nullish(),
     id: z.string(),
     name: z.string(),
     nationalityOrCountry: z.string(),
@@ -159,7 +167,14 @@ export function AssociationMemberSchema(): z.ZodObject<
 > {
   return z.object({
     __typename: z.literal("AssociationMember").optional(),
+    ethereumAddress: z
+      .string()
+      .regex(/^0x[a-fA-F0-9]{40}$/, {
+        message: "Invalid Ethereum address format",
+      })
+      .nullish(),
     id: z.string(),
+    incorporationSignedAt: z.iso.datetime().nullish(),
     name: z.string(),
     nationalityOrCountry: z.string(),
     representative: z.string().nullish(),
@@ -372,6 +387,19 @@ export function SetMeetingRolesInputSchema(): z.ZodObject<
   });
 }
 
+export function SetMemberEthereumAddressInputSchema(): z.ZodObject<
+  Properties<SetMemberEthereumAddressInput>
+> {
+  return z.object({
+    ethereumAddress: z
+      .string()
+      .regex(/^0x[a-fA-F0-9]{40}$/, {
+        message: "Invalid Ethereum address format",
+      }),
+    id: z.string(),
+  });
+}
+
 export function SetMultisigConfigInputSchema(): z.ZodObject<
   Properties<SetMultisigConfigInput>
 > {
@@ -403,6 +431,14 @@ export function SetStage2DocumentMarkdownInputSchema(): z.ZodObject<
   return z.object({
     documentType: Stage2DocumentTypeSchema,
     markdown: z.string(),
+  });
+}
+
+export function SignForIncorporationInputSchema(): z.ZodObject<
+  Properties<SignForIncorporationInput>
+> {
+  return z.object({
+    signedAt: z.iso.datetime(),
   });
 }
 

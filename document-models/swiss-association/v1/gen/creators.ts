@@ -12,6 +12,8 @@ export * from "./dissolution/creators.js";
 export * as swissAssociationDissolutionActions from "./dissolution/creators.js";
 export * from "./documents/creators.js";
 export * as swissAssociationDocumentsActions from "./documents/creators.js";
+export * from "./incorporation/creators.js";
+export * as swissAssociationIncorporationActions from "./incorporation/creators.js";
 export * from "./members/creators.js";
 export * as swissAssociationMembersActions from "./members/creators.js";
 export * from "./multisig/creators.js";

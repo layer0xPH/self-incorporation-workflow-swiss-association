@@ -6,16 +6,19 @@ import { createAction } from "document-model";
 import {
   AddMemberInputSchema,
   RemoveMemberInputSchema,
+  SetMemberEthereumAddressInputSchema,
   UpdateMemberInputSchema,
 } from "../schema/zod.js";
 import type {
   AddMemberInput,
   RemoveMemberInput,
+  SetMemberEthereumAddressInput,
   UpdateMemberInput,
 } from "../types.js";
 import type {
   AddMemberAction,
   RemoveMemberAction,
+  SetMemberEthereumAddressAction,
   UpdateMemberAction,
 } from "./actions.js";
 
@@ -43,5 +46,16 @@ export const removeMember = (input: RemoveMemberInput) =>
     { ...input },
     undefined,
     RemoveMemberInputSchema,
+    "global",
+  );
+
+export const setMemberEthereumAddress = (
+  input: SetMemberEthereumAddressInput,
+) =>
+  createAction<SetMemberEthereumAddressAction>(
+    "SET_MEMBER_ETHEREUM_ADDRESS",
+    { ...input },
+    undefined,
+    SetMemberEthereumAddressInputSchema,
     "global",
   );
