@@ -246,30 +246,33 @@ function CheckIcon({ size = 10 }: { size?: number }) {
 }
 
 function StepRow({
-  number,
   label,
   status,
   onClick,
 }: {
-  number: number;
   label: string;
   status: Status;
   onClick: () => void;
 }) {
+  // Step numbers are intentionally NOT displayed — they are internal keys for
+  // gating/routing (isStepLocked, OPTIONAL_BRANCH_STEPS) and would read as
+  // out-of-order to the user. Show a completion marker instead: a checkmark for
+  // done, a filled dot for the current/pending steps (colour conveys state).
   return (
     <button
       onClick={onClick}
       className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-left transition-colors ${ROW_BG[status]}`}
     >
       <span
-        className={`w-[18px] h-[18px] rounded-full flex items-center justify-center text-[9px] font-semibold flex-shrink-0 ${ROW_CIRCLE[status]}`}
+        className={`w-[18px] h-[18px] rounded-full flex items-center justify-center flex-shrink-0 ${ROW_CIRCLE[status]}`}
       >
         {status === "done" ? (
           <CheckIcon size={9} />
-        ) : number < 0 ? (
-          <span aria-hidden="true">✍</span>
         ) : (
-          number
+          <span
+            className="w-1.5 h-1.5 rounded-full bg-current"
+            aria-hidden="true"
+          />
         )}
       </span>
       <span className={`text-[11px] ${ROW_LABEL[status]}`}>{label}</span>
@@ -367,7 +370,6 @@ function StageCard({
         {stage.steps.map((step) => (
           <StepRow
             key={step.number}
-            number={step.number}
             label={step.label}
             status={getStepStatus(step.number, currentStep, progress)}
             onClick={() => onStepClick(step.number)}

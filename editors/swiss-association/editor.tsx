@@ -275,8 +275,8 @@ export default function Editor() {
           outline: none;
         }
         .sw-input:focus {
-          border-color: #dc2626;
-          box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+          border-color: #12A594;
+          box-shadow: 0 0 0 3px rgba(18, 165, 148, 0.15);
         }
         .sw-input::placeholder {
           color: #94a3b8;
@@ -296,14 +296,14 @@ export default function Editor() {
           font-size: 0.875rem;
           font-weight: 600;
           color: #fff;
-          background-color: #dc2626;
-          border: 1px solid #dc2626;
+          background-color: #12A594;
+          border: 1px solid #12A594;
           border-radius: 0.5rem;
           cursor: pointer;
           transition: background-color 0.15s;
         }
         .sw-btn-primary:hover:not(:disabled) {
-          background-color: #b91c1c;
+          background-color: #0F8C7E;
         }
         .sw-btn-primary:disabled {
           opacity: 0.4;

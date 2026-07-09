@@ -22,8 +22,9 @@ export function M1Banner({ state, onOpenAoa }: Props) {
       <h2 className="text-2xl font-bold mt-2.5">Legal personhood achieved</h2>
       <p className="text-sm text-green-50 mt-1 max-w-2xl">
         {name} now exists as a legal person and can act in its own name. The
-        founding is complete — everything from here is an optional capability
-        you add when you need it.
+        founding is complete — everything from here is optional: set up a
+        treasury, engage contributors, or simply keep the association as a
+        minimal, constituted entity.
       </p>
       {onOpenAoa && (
         <button

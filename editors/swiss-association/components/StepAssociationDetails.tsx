@@ -162,6 +162,18 @@ export function StepAssociationDetails({ state, dispatch, onNext }: Props) {
             Your purpose statement also feeds the suitability analysis.
           </p>
         </FormField>
+        <div className="mt-2 p-3 bg-sky-50 border border-sky-200 rounded-lg">
+          <p className="text-xs font-medium text-sky-800 mb-1">
+            Commercial registry (Handelsregister)
+          </p>
+          <p className="text-xs text-sky-700">
+            A non-commercial association is not required to register in the
+            commercial registry. Registration is only mandatory if the
+            association runs a commercial business, is subject to audit, or
+            mainly distributes assets abroad (Art. 61 ZGB — the test is
+            commercial vs non-commercial, not profit motive).
+          </p>
+        </div>
         {purposeEn && (
           <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
             <p className="text-xs font-medium text-amber-800 mb-1">

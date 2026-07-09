@@ -27,7 +27,7 @@ export function StepArticlesOfAssociation({
       generateMarkdown={() => buildAoaMarkdown(state)}
       onBack={onBack}
       onNext={onNext}
-      nextLabel="Continue to Founding Minutes →"
+      nextLabel="Continue to Regulation of the GA →"
       nextRequiresSigned={true}
       signable={false}
       lockedHint="The AoA is now locked and cannot be edited."

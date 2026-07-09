@@ -29,13 +29,23 @@ function formatMemberLine(
   return `${name} (${nationalityOrCountry}, ${residenceOrCity})`;
 }
 
+// Some legal templates (exported from Word/Markdown) escape special characters
+// with backslashes: `\[Token\]` and even `\=` inside a token. Build the
+// backslash-escaped variant of a token so those forms are matched too — missing
+// the `\=` case is what caused Reg GA tokens like `[... \=absolute majority]` to
+// leak into the rendered output.
+function escapeTokenBackslashes(token: string): string {
+  return token
+    .replaceAll("[", "\\[")
+    .replaceAll("]", "\\]")
+    .replaceAll("=", "\\=");
+}
+
 function replaceToken(template: string, token: string, value: string) {
   let next = template.split(token).join(value);
 
-  // Some legal templates escape bracket placeholders as \[Token\].
-  if (token.includes("[") || token.includes("]")) {
-    const escapedToken = token.replaceAll("[", "\\[").replaceAll("]", "\\]");
-    next = next.split(escapedToken).join(value);
+  if (token.includes("[") || token.includes("]") || token.includes("=")) {
+    next = next.split(escapeTokenBackslashes(token)).join(value);
   }
 
   return next;
@@ -44,9 +54,8 @@ function replaceToken(template: string, token: string, value: string) {
 function replaceTokenOnce(template: string, token: string, value: string) {
   let next = template.replace(token, value);
 
-  if (token.includes("[") || token.includes("]")) {
-    const escapedToken = token.replaceAll("[", "\\[").replaceAll("]", "\\]");
-    next = next.replace(escapedToken, value);
+  if (token.includes("[") || token.includes("]") || token.includes("=")) {
+    next = next.replace(escapeTokenBackslashes(token), value);
   }
 
   return next;
@@ -467,18 +476,26 @@ export function buildFoundingMinutesMarkdown(state: SwissAssociationState) {
 
 export function buildRegulationGAMarkdown(state: SwissAssociationState) {
   const associationName = state.nameEn || state.nameDe || "Association";
-  const date = formatDate(state.foundingDate);
   const chairName = state.chairName || "Chair";
-  const secretaryName = state.secretaryName || "Secretary";
 
-  // Strip preamble BEFORE replacements so the anchor text is still intact
+  // Draft vs adopted — same signal as the AoA: the Regulation is adopted when
+  // every founding member signs for incorporation.
+  const adopted = !!state.incorporationCompletedAt;
+  const adoptionDate = formatDate(
+    state.incorporationCompletedAt || state.foundingDate,
+  );
+
+  // Slice to the body (drop the preamble) AND drop the raw template's trailing
+  // approval/signatory block — the shared signature section replaces it, so its
+  // broken `Signatory 1 (Role \= chair\]` tokens never reach the output.
   let raw = regulationGATemplateRaw;
   const bodyStart = raw.indexOf("**Article I.");
   if (bodyStart > 0) raw = raw.slice(bodyStart);
+  const approvalStart = raw.indexOf("Approved by the General Assembly on");
+  if (approvalStart > 0) raw = raw.slice(0, approvalStart);
 
   let template = applyReplacements(raw, [
     { token: "[Association Name]", value: associationName },
-    { token: "[Date]", value: date },
     {
       token: "[default majority rule =absolute majority]",
       value: "absolute majority",
@@ -493,24 +510,15 @@ export function buildRegulationGAMarkdown(state: SwissAssociationState) {
   template =
     `# ${associationName} — Regulation of the General Assembly\n\n` + template;
 
-  // Replace signatory placeholders
-  template = template
-    .replace("Signatory 1 (Role = chair]", chairName)
-    .replace("Signatory 2 (Role = secretary)", secretaryName);
-
-  // Approval by the General Assembly is the operative act — signing this
-  // regulation is not mandatory. Render a single optional signatory (the chair)
-  // as a formality, not a required chair+secretary pair (those mandatory
-  // signatures belong to the founding minutes, handled separately).
-  template += buildSignatureSection(
-    `Approved by the General Assembly of **${associationName}** on **${date}**. Signing this regulation is an optional formality — approval by the General Assembly is the operative act, with the mandatory signatures recorded on the founding meeting minutes.`,
-    [
-      {
-        name: chairName,
-        role: "For the General Assembly — optional signatory",
-      },
-    ],
-  );
+  // Shared signature section (same one used by the AoA and minutes). Approval by
+  // the General Assembly — effected by the members signing for incorporation —
+  // is the operative act; a single optional signatory is a formality.
+  const approvalStatement = adopted
+    ? `Approved by the General Assembly of **${associationName}** on **${adoptionDate}**, effected by each founding member signing for incorporation.`
+    : `Submitted for approval by the General Assembly of **${associationName}**. Until every founding member has signed for incorporation this Regulation remains a draft.`;
+  template += buildSignatureSection(approvalStatement, [
+    { name: chairName, role: "For the General Assembly — optional signatory" },
+  ]);
 
   return appendPlaceholderReport(template, "Regulation GA");
 }
