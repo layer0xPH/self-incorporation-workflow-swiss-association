@@ -62,47 +62,45 @@ function SignedDocCard({
 export function StepFinalArchive({ state, onBack }: Props) {
   const associationName = state.nameEn || state.nameDe || "Association";
 
-  // Signed-only — the archive is the record of what was actually executed.
-  // The AoA is adopted at the founding meeting (after it is signed/locked at
-  // step 4), so its archived copy is re-rendered from live state — the frozen
-  // step-4 markdown is only the pre-adoption draft. The others show their signed
-  // (frozen) markdown as executed.
-  const aoaAdopted = state.foundingMinutesDocument?.isSigned === true;
+  // The archive is the record of what was actually executed.
+  // The founding documents (AoA, Reg GA, Founding Minutes) are executed together
+  // when the founding members sign for incorporation — so they appear here once
+  // `incorporationCompletedAt` is set, dated by it and labelled "Adopted". The
+  // MPA is still executed via its own "mark as signed" flow.
+  const incorporatedAt = state.incorporationCompletedAt;
+  const incorporated = !!incorporatedAt;
   const singletons = [
     {
       title: "Articles of Association (AoA)",
-      doc: state.aoaDocument,
+      // Re-rendered from live state so the archived copy reflects the adopted
+      // statutes, not a stale draft.
       markdown: buildAoaMarkdown(state),
-      // The AoA's meaningful date is its ADOPTION (founding meeting), matching
-      // the body ("adopted on …"). Before adoption it is only a signed draft,
-      // so fall back to its own step-4 signed timestamp.
-      dateLabel: aoaAdopted ? "Adopted" : "Signed",
-      date: aoaAdopted
-        ? state.foundingMinutesDocument?.signedAt || state.foundingDate
-        : state.aoaDocument?.signedAt,
+      dateLabel: "Adopted",
+      date: incorporatedAt,
+      executed: incorporated,
     },
     {
       title: "Regulation of the General Assembly",
-      doc: state.regGaDocument,
       markdown: state.regGaDocument?.markdown,
-      dateLabel: "Signed",
-      date: state.regGaDocument?.signedAt,
+      dateLabel: "Adopted",
+      date: incorporatedAt,
+      executed: incorporated,
     },
     {
       title: "Founding Meeting Minutes",
-      doc: state.foundingMinutesDocument,
       markdown: state.foundingMinutesDocument?.markdown,
-      dateLabel: "Signed",
-      date: state.foundingMinutesDocument?.signedAt,
+      dateLabel: "Adopted",
+      date: incorporatedAt,
+      executed: incorporated,
     },
     {
       title: "Multisig Participation Agreement (MPA)",
-      doc: state.mpaDocument,
       markdown: state.mpaDocument?.markdown,
       dateLabel: "Signed",
       date: state.mpaDocument?.signedAt,
+      executed: state.mpaDocument?.isSigned === true,
     },
-  ].filter((entry) => entry.doc?.isSigned === true);
+  ].filter((entry) => entry.executed);
 
   // Contributor agreements are a collection — surface each signed one.
   const signedContributors = state.contributorAgreements.filter(
@@ -129,8 +127,8 @@ export function StepFinalArchive({ state, onBack }: Props) {
             No executed documents yet
           </p>
           <p className="text-xs text-slate-500 mt-1">
-            Documents appear here once they are signed. Complete and sign the
-            governing documents to build the archive.
+            Documents appear here once they are executed. The founding documents
+            are executed when every founding member signs for incorporation.
           </p>
         </div>
       ) : (

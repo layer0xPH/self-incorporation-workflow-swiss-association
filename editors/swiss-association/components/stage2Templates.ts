@@ -215,15 +215,15 @@ export function buildAoaMarkdown(state: SwissAssociationState) {
   const date = formatDate(state.foundingDate);
   const city = state.seatCity || "Zug";
 
-  // Adoption is effected by APPROVAL at the founding assembly (step 7), never by
-  // the optional signing at step 4. So every "adopted / in force" claim in the
-  // AoA is conditional on the founding minutes being signed — a draft before (no
-  // past tense, no date), the dated fact after, with the date taken from the
-  // founding meeting (the minutes' signedAt, falling back to the founding date),
-  // NOT from the AoA's own optional sign action.
-  const adopted = state.foundingMinutesDocument?.isSigned === true;
+  // Adoption is effected when the founding members sign for incorporation
+  // (SIGN_FOR_INCORPORATION), not by any per-document signing. So every
+  // "adopted / in force" claim in the AoA is conditional on incorporation being
+  // complete — a draft before (no past tense, no date), the dated fact after,
+  // with the date taken from `incorporationCompletedAt` (falling back to the
+  // founding date).
+  const adopted = !!state.incorporationCompletedAt;
   const adoptionDate = formatDate(
-    state.foundingMinutesDocument?.signedAt || state.foundingDate,
+    state.incorporationCompletedAt || state.foundingDate,
   );
 
   // The registered street address is optional. The registered office renders
@@ -307,8 +307,8 @@ export function buildAoaMarkdown(state: SwissAssociationState) {
   const optionalSigner = boardSigners.at(0);
 
   const adoptionStatement = adopted
-    ? `These Articles of Association were adopted by the founding assembly of **${associationName}** on **${adoptionDate}** in **${city}**, Switzerland. Signing the statutes is an optional formality — adoption is effected by the assembly's approval, with the mandatory signatures recorded on the founding meeting minutes.`
-    : `These Articles of Association are submitted for adoption by the founding assembly of **${associationName}**. Until the assembly approves them at the founding meeting they remain a draft — signing here is an optional formality by one or two board members, and the mandatory signatures (chair + secretary) are recorded on the founding meeting minutes.`;
+    ? `These Articles of Association were adopted by the founding members of **${associationName}** on **${adoptionDate}** in **${city}**, Switzerland, effected by each founding member signing for incorporation.`
+    : `These Articles of Association are submitted for adoption by the founding members of **${associationName}**. Until every founding member has signed for incorporation they remain a draft.`;
   template += buildSignatureSection(
     adoptionStatement,
     optionalSigner
