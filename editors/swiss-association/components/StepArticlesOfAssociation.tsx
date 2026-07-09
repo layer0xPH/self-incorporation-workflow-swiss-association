@@ -29,6 +29,7 @@ export function StepArticlesOfAssociation({
       onNext={onNext}
       nextLabel="Continue to Founding Minutes →"
       nextRequiresSigned={true}
+      signable={false}
       lockedHint="The AoA is now locked and cannot be edited."
     />
   );

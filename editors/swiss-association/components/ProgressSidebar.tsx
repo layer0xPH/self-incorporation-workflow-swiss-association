@@ -18,10 +18,10 @@ export interface StageProgress {
   detailsDone: boolean;
   membersDone: boolean;
   boardDone: boolean;
-  aoaSigned: boolean;
-  regGaSigned: boolean;
+  aoaGenerated: boolean;
+  regGaGenerated: boolean;
   meetingRolesDone: boolean;
-  minutesSigned: boolean;
+  minutesGenerated: boolean;
   incorporationSigned: boolean;
   multisigConfigured: boolean;
   mpaSigned: boolean;
@@ -36,7 +36,7 @@ export interface StageProgress {
 // completion). Contributor agreements (9) is a placeholder with no completion
 // state yet; it stays not-done until its templates are wired in.
 function isStepDone(step: number, p: StageProgress): boolean {
-  const constituted = p.aoaSigned && p.minutesSigned;
+  const constituted = p.incorporationSigned;
   if (step === SIGNING_STEP) return p.incorporationSigned;
   switch (step) {
     case 1:
@@ -46,13 +46,13 @@ function isStepDone(step: number, p: StageProgress): boolean {
     case 3:
       return p.boardDone;
     case 4:
-      return p.aoaSigned;
+      return p.aoaGenerated;
     case 5:
-      return p.regGaSigned;
+      return p.regGaGenerated;
     case 6:
       return p.multisigConfigured;
     case 7:
-      return p.minutesSigned;
+      return p.minutesGenerated;
     case 8:
       return p.mpaSigned || (!p.hasMultisig && constituted);
     case 9:
@@ -75,7 +75,10 @@ function stageMilestone(
     case 2:
       // Incorporation complete → the entity legally exists (shell-complete).
       // Wording kept identical to the CapabilityFlow SVG node.
-      return { title: "Exists as a legal person", reached: p.minutesSigned };
+      return {
+        title: "Exists as a legal person",
+        reached: p.incorporationSigned,
+      };
     case 3:
       // Defined by the multisig; the MPA is additive and does not gate it.
       return { title: "Can hold & move money", reached: p.hasMultisig };
@@ -421,7 +424,7 @@ export function ProgressSidebar({
     // Dissolution) hang off the constituted entity in parallel — they open
     // together once M1 is reached and never gate one another.
     if (stage.optional) {
-      return progress.minutesSigned ? "available" : "locked";
+      return progress.incorporationSigned ? "available" : "locked";
     }
     // Required stages (Pre-Incorporation → Incorporation) stay sequential.
     const prevAllDone =

@@ -174,11 +174,11 @@ export function CapabilityFlow({
   // route, and never when a multisig exists (that would contradict "no
   // treasury"). Otherwise the normal capability progression shows.
   const showShieldCo =
-    shieldCo && progress.minutesSigned && !progress.hasMultisig;
+    shieldCo && progress.incorporationSigned && !progress.hasMultisig;
 
   // Core (required) + three independent optional branches.
   const core: FlowNode = {
-    reached: progress.minutesSigned,
+    reached: progress.incorporationSigned,
     title: "Exists as a legal person",
     sub: "Art. 60 ZGB · required foundation",
   };

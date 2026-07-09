@@ -142,7 +142,7 @@ export function StepFoundingMeeting({
       {rolesSaved && (
         <Stage2DocumentStep
           title="Founding Meeting Minutes"
-          description="Review the Founding Meeting Minutes generated from the data you provided. Sign to confirm the official record of the founding."
+          description="Review the Founding Meeting Minutes generated from the data you provided. They are executed when the founding members sign for incorporation — no separate signature here."
           documentType="FOUNDING_MINUTES"
           dispatch={dispatch}
           documentState={state.foundingMinutesDocument}
@@ -151,6 +151,7 @@ export function StepFoundingMeeting({
           onNext={onNext}
           nextLabel="Continue →"
           nextRequiresSigned={true}
+          signable={false}
           lockedHint="The Founding Meeting Minutes are now locked and cannot be edited."
         />
       )}

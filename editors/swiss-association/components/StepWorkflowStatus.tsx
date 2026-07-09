@@ -274,8 +274,9 @@ export function StepWorkflowStatus({
   );
   const membersDone = state.members.length >= 2;
   const boardDone = (state.boardMembers?.length ?? 0) >= 1;
-  const aoaSigned = state.aoaDocument?.isSigned === true;
-  const minutesSigned = state.foundingMinutesDocument?.isSigned === true;
+  // The founding documents (AoA, Reg GA, minutes) are executed by the founding
+  // members signing for incorporation — not by a per-document "mark as signed".
+  const incorporated = !!state.incorporationCompletedAt;
   const meetingRolesDone = !!(state.chairName && state.secretaryName);
   const mpaSigned = state.mpaDocument?.isSigned === true;
 
@@ -357,20 +358,21 @@ export function StepWorkflowStatus({
         </div>
       </SectionCard>
 
-      <SectionCard title="Phase 2 — Sign Governing Documents">
+      <SectionCard title="Phase 2 — Governing Documents">
         <p className="text-xs text-slate-500 mb-3">
-          Review and execute the core legal documents that define how the
-          association operates.
+          Review the core legal documents that define how the association
+          operates. They are adopted when the founding members sign for
+          incorporation.
         </p>
         <div className="space-y-3">
           <ProgressRow
-            done={aoaSigned}
-            label="Articles of Association signed"
+            done={incorporated}
+            label="Articles of Association adopted"
             sub="Main governing document (Art. 60–79 ZGB)"
           />
           <ProgressRow
-            done={aoaSigned}
-            label="Regulation of the General Assembly signed"
+            done={incorporated}
+            label="Regulation of the General Assembly adopted"
             sub="Decision-making and voting rules"
           />
         </div>
@@ -388,8 +390,8 @@ export function StepWorkflowStatus({
             sub="Chair and Secretary designated"
           />
           <ProgressRow
-            done={minutesSigned}
-            label="Founding Meeting Minutes signed"
+            done={incorporated}
+            label="Founding Meeting Minutes adopted"
             sub="Official record of incorporation"
           />
         </div>

@@ -65,13 +65,11 @@ export const swissAssociationDocumentsOperations: SwissAssociationDocumentsOpera
       target.isSigned = true;
       target.signedAt = action.input.signedAt;
       target.isLocked = true;
-
-      if (
-        state.aoaDocument?.isSigned &&
-        state.foundingMinutesDocument?.isSigned &&
-        !state.incorporationCompletedAt
-      ) {
-        state.incorporationCompletedAt = action.input.signedAt;
-      }
+      // NOTE: incorporation is NOT derived from marking documents signed.
+      // The entity is incorporated only when every founding member has signed
+      // via SIGN_FOR_INCORPORATION (see the incorporation module). The founding
+      // documents (AoA, Reg GA, Founding Minutes) are executed by that signing,
+      // not by this "mark as signed" flow — which remains for post-founding
+      // documents (MPA, dissolution, contributor agreements).
     },
   };

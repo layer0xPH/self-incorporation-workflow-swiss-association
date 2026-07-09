@@ -124,22 +124,25 @@ export const REQUIRED_CHAIN_STEPS = [4, 5, 7] as const;
 const OPTIONAL_BRANCH_STEPS = new Set([6, 8, 9]);
 
 // The minimum signals needed to decide whether a step is a read-only preview.
-// `minutesSigned` is Milestone M1 — the association legally exists.
+// The founding documents are drafted (generated) in order, then all executed at
+// once by SIGN_FOR_INCORPORATION — so ordering gates on *generation*, while the
+// M1 "legally exists" gate is `incorporationSigned`.
 export interface StepGate {
-  aoaSigned: boolean;
-  regGaSigned: boolean;
-  minutesSigned: boolean;
+  aoaGenerated: boolean;
+  regGaGenerated: boolean;
+  incorporationSigned: boolean;
 }
 
 // Is `step` a genuinely-locked read-only preview (not yet reachable)?
 //
 // Gating is per-branch, NOT one linear chain:
 //   • Required founding chain, order matters: AoA (4) → Reg GA (5) →
-//     Founding Meeting (7). Each is a preview until its predecessors are signed.
+//     Founding Meeting (7). Each is a preview until its predecessors are
+//     drafted (generated) — signing happens later, at incorporation.
 //   • Optional parallel branches (Treasury 6/8, Supplier & Contributor 9) open
-//     together once the entity is constituted (M1). No cross-branch gating — a
-//     user reaches the contributor agreement (9) after founding WITHOUT the
-//     multisig (6).
+//     together once the entity is constituted (M1 = incorporation signed). No
+//     cross-branch gating — a user reaches the contributor agreement (9) after
+//     founding WITHOUT the multisig (6).
 //   • Welcome + data entry (0–3) and Dissolution (≥10) are always reachable.
 export function isStepLocked(step: number, g: StepGate): boolean {
   if (step >= DISSOLUTION_FIRST_STEP) return false;
@@ -148,8 +151,8 @@ export function isStepLocked(step: number, g: StepGate): boolean {
   // (matching member, not yet signed, not already incorporated), and the step
   // warns about members without a wallet.
   if (step === SIGNING_STEP) return false;
-  if (OPTIONAL_BRANCH_STEPS.has(step)) return !g.minutesSigned;
-  if (step === 5) return !g.aoaSigned;
-  if (step === 7) return !g.aoaSigned || !g.regGaSigned;
+  if (OPTIONAL_BRANCH_STEPS.has(step)) return !g.incorporationSigned;
+  if (step === 5) return !g.aoaGenerated;
+  if (step === 7) return !g.aoaGenerated || !g.regGaGenerated;
   return false;
 }

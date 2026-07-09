@@ -30,6 +30,11 @@ interface Stage2DocumentStepProps {
   nextLabel?: string;
   lockedHint?: string;
   nextRequiresSigned?: boolean;
+  // When false, this document is NOT signed here (no "Mark as Signed" button /
+  // signed banner) — it is executed elsewhere (the founding documents are
+  // executed by SIGN_FOR_INCORPORATION). In that mode `nextRequiresSigned`
+  // gates on the draft being generated instead of signed. Defaults to true.
+  signable?: boolean;
   // Optional overrides for persistence — when provided they take precedence
   // over the documentType-based dispatch (used by collection items keyed by id).
   persistMarkdown?: (markdown: string) => void;
@@ -48,6 +53,7 @@ export function Stage2DocumentStep({
   nextLabel = "Continue →",
   lockedHint,
   nextRequiresSigned = false,
+  signable = true,
   persistMarkdown,
   markSigned,
 }: Stage2DocumentStepProps) {
@@ -77,6 +83,10 @@ export function Stage2DocumentStep({
   const [previewOpen, setPreviewOpen] = useState(false);
   const isLocked = documentState?.isLocked === true;
   const isSigned = documentState?.isSigned === true;
+  const isGenerated = !!documentState?.markdown;
+  // Whether the "advance" precondition is met: signed (signable docs) or merely
+  // drafted (non-signable founding docs, executed later at incorporation).
+  const advanceReady = signable ? isSigned : isGenerated;
   const markdown =
     previewMarkdown ?? documentState?.markdown ?? generateMarkdown();
 
@@ -129,7 +139,7 @@ export function Stage2DocumentStep({
         <p className="text-sm text-slate-500 mt-1">{description}</p>
       </div>
 
-      {isSigned && (
+      {signable && isSigned && (
         <div className="p-4 bg-green-50 border border-green-200 rounded-xl">
           <p className="text-sm font-medium text-green-800">
             Signed and locked at{" "}
@@ -138,6 +148,15 @@ export function Stage2DocumentStep({
           {lockedHint && (
             <p className="text-xs text-green-700 mt-1">{lockedHint}</p>
           )}
+        </div>
+      )}
+      {!signable && (
+        <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+          <p className="text-sm text-slate-600">
+            This document is executed by the founding members signing for
+            incorporation — there is no separate signature here. Review and edit
+            it, then complete the Incorporation Signing step.
+          </p>
         </div>
       )}
 
@@ -169,14 +188,16 @@ export function Stage2DocumentStep({
             >
               Download PDF
             </button>
-            <button
-              type="button"
-              onClick={handleMarkSigned}
-              disabled={isLocked}
-              className="sw-btn-primary"
-            >
-              Mark as Signed
-            </button>
+            {signable && (
+              <button
+                type="button"
+                onClick={handleMarkSigned}
+                disabled={isLocked}
+                className="sw-btn-primary"
+              >
+                Mark as Signed
+              </button>
+            )}
           </div>
           {generationMessage && (
             <p className="text-xs text-slate-500">{generationMessage}</p>
@@ -223,7 +244,7 @@ export function Stage2DocumentStep({
           <button
             type="button"
             onClick={onNext}
-            disabled={nextRequiresSigned && !isSigned}
+            disabled={nextRequiresSigned && !advanceReady}
             className="sw-btn-primary"
           >
             {nextLabel}

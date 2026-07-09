@@ -68,10 +68,12 @@ export default function Editor() {
     ),
     membersDone: state.members.length >= 2,
     boardDone: (state.boardMembers?.length ?? 0) >= 1,
-    aoaSigned: state.aoaDocument?.isSigned === true,
-    regGaSigned: state.regGaDocument?.isSigned === true,
+    // Founding documents are drafted here but executed by the incorporation
+    // signing, so their progress is "generated", not fake-"signed".
+    aoaGenerated: !!state.aoaDocument?.markdown,
+    regGaGenerated: !!state.regGaDocument?.markdown,
     meetingRolesDone: !!(state.chairName && state.secretaryName),
-    minutesSigned: state.foundingMinutesDocument?.isSigned === true,
+    minutesGenerated: !!state.foundingMinutesDocument?.markdown,
     multisigConfigured: !!state.multisig,
     mpaSigned: state.mpaDocument?.isSigned === true,
     dissolutionDetailsDone: !!(

@@ -24,6 +24,7 @@ export function StepRegulationGA({ state, dispatch, onBack, onNext }: Props) {
       onNext={onNext}
       nextLabel="Continue →"
       nextRequiresSigned={true}
+      signable={false}
       lockedHint="The Regulation of the General Assembly is now locked and cannot be edited."
     />
   );
