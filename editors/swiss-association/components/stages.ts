@@ -143,7 +143,11 @@ export interface StepGate {
 //   • Welcome + data entry (0–3) and Dissolution (≥10) are always reachable.
 export function isStepLocked(step: number, g: StepGate): boolean {
   if (step >= DISSOLUTION_FIRST_STEP) return false;
-  if (step === SIGNING_STEP) return !g.minutesSigned;
+  // Incorporation signing is itself the founding act — never gate it behind a
+  // "mark as signed" flag. The Sign button and the reducer enforce who may sign
+  // (matching member, not yet signed, not already incorporated), and the step
+  // warns about members without a wallet.
+  if (step === SIGNING_STEP) return false;
   if (OPTIONAL_BRANCH_STEPS.has(step)) return !g.minutesSigned;
   if (step === 5) return !g.aoaSigned;
   if (step === 7) return !g.aoaSigned || !g.regGaSigned;
